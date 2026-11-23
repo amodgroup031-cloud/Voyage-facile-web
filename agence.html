@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Tableau de bord – VOYAGE FACILE</title>
+<link rel="icon" href="icone.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.login{max-width:420px;margin:30px auto}
+.tabs{display:flex;gap:6px;background:rgba(255,255,255,.1);padding:4px;border-radius:12px}
+.tab{border:0;background:transparent;color:#cfdcec;padding:8px 12px;border-radius:9px;font-weight:600;cursor:pointer;min-height:40px}
+.tab[aria-selected="true"]{background:#fff;color:var(--navy)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.kpi span{font-size:13px;color:var(--muted)}.kpi b{display:block;font-family:'Montserrat',sans-serif;font-size:22px;color:var(--navy)}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.filters button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer;min-height:38px}
+.filters button[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:10px;cursor:pointer;text-align:left;width:100%}
+.item:hover{border-color:#b9c9de}
+.item b{color:var(--navy)}
+.st-nouvelle{background:#fff1c2;color:#6b4f00}.st-en_cours{background:#eef4fb;color:#24456f}.st-confirmee{background:#efe9fb;color:#4b2f86}.st-billet_envoye{background:#e3f5ea;color:#165c3d}.st-annulee{background:#fde8e7;color:var(--bad)}
+dialog{border:0;border-radius:18px;padding:0;width:min(640px,96vw);max-height:92vh}
+dialog::backdrop{background:rgba(8,26,51,.55)}
+.dh{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff}
+.db{padding:14px 16px;display:grid;gap:12px}
+.box{background:var(--sky);border-radius:12px;padding:10px 12px;font-size:14px}
+.row{display:flex;justify-content:space-between;gap:10px}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:620px){.hrow{flex-wrap:wrap}.tabs{width:100%}.tab{flex:1}}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="hrow">
+    <a class="brand" href="index.html"><svg width="40" height="40" viewBox="14 0 112 112" aria-hidden="true"><path d="M56 100 C56 100 22 70 22 45 C22 26 37 11 56 11 C75 11 90 26 90 45 C90 70 56 100 56 100 Z" fill="#ffffff"/><path d="M56 100 C56 100 22 70 22 45 C22 26 37 11 56 11 Z" fill="#dfe8f3"/><path d="M40 46 L52 58 L73 35" fill="none" stroke="#0b2545" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/><path transform="translate(96 18) rotate(-40) scale(1.25)" d="M17 0 C17 -1.5 15.6 -2.5 13 -2.5 L4.6 -2.5 L-4.8 -15.5 L-8.8 -15.5 L-3.4 -2.5 L-10.4 -2.5 L-13.8 -7.6 L-16.4 -7.6 L-14.4 -2 L-15.4 0 L-14.4 2 L-16.4 7.6 L-13.8 7.6 L-10.4 2.5 L-3.4 2.5 L-8.8 15.5 L-4.8 15.5 L4.6 2.5 L13 2.5 C15.6 2.5 17 1.5 17 0 Z" fill="#f28c28"/></svg><span><b>VOYAGE <span>FACILE</span></b><small>TABLEAU DE BORD</small></span></a>
+    <div class="tabs" id="tabs" hidden>
+      <button class="tab" id="tDem" aria-selected="true">Demandes</button>
+      <button class="tab" id="tReg" aria-selected="false">Réglages</button>
+      <button class="tab" id="tOut" aria-selected="false" title="Se déconnecter">Sortir</button>
+    </div>
+  </div>
+</header>
+<main>
+  <!-- Connexion -->
+  <section id="vLogin" class="login" hidden>
+    <form class="panel" id="fLogin">
+      <h1 style="font-size:22px;margin-bottom:12px">Connexion agence</h1>
+      <label for="em">E-mail</label><input id="em" type="email" autocomplete="username" required>
+      <label for="pw" style="margin-top:10px">Mot de passe</label><input id="pw" type="password" autocomplete="current-password" required minlength="8">
+      <button class="btn btn-navy w100" style="margin-top:14px" type="submit">Se connecter</button>
+      <button class="btn btn-ghost w100" style="margin-top:8px" type="button" id="bSignup">Créer le compte de l'agence (première fois)</button>
+      <div class="err" id="eLogin" hidden></div>
+    </form>
+  </section>
+
+  <section id="vWait" hidden><div class="panel"><b>Compte créé, en attente d'activation.</b><p class="muted" style="margin-top:6px">Pour la sécurité, un compte doit être activé avant de voir les demandes des clients. Identifiant à communiquer : <code id="uid"></code></p></div></section>
+
+  <!-- Demandes -->
+  <section id="vDem" hidden>
+    <div class="kpis">
+      <div class="kpi"><span>Nouvelles demandes</span><b id="kNew">0</b></div>
+      <div class="kpi"><span>En cours</span><b id="kCours">0</b></div>
+      <div class="kpi"><span>Billets envoyés (ce mois)</span><b id="kEnv">0</b></div>
+      <div class="kpi"><span>Commissions (billets envoyés, ce mois)</span><b id="kCom">0 GNF</b></div>
+    </div>
+    <div class="filters" id="filters">
+      <button data-f="actives" aria-pressed="true">À traiter</button>
+      <button data-f="nouvelle" aria-pressed="false">Nouvelles</button>
+      <button data-f="en_cours" aria-pressed="false">En cours</button>
+      <button data-f="confirmee" aria-pressed="false">Prix confirmé</button>
+      <button data-f="billet_envoye" aria-pressed="false">Billet envoyé</button>
+      <button data-f="annulee" aria-pressed="false">Annulées</button>
+      <button data-f="toutes" aria-pressed="false">Toutes</button>
+    </div>
+    <div class="list" id="list"></div>
+    <p class="muted" style="margin-top:10px">Mise à jour automatique toutes les 30 secondes. <a href="#" id="refresh">Actualiser</a></p>
+  </section>
+
+  <!-- Réglages -->
+  <section id="vReg" hidden>
+    <form class="panel" id="fReg" style="max-width:560px">
+      <h1 style="font-size:20px;margin-bottom:6px">Réglages</h1>
+      <p class="muted" style="margin-bottom:12px">Le taux de change sert à convertir les prix des vols en GNF. Mettez-le à jour souvent.</p>
+      <div class="grid">
+        <div><label for="rUSD">1 dollar (USD) = … GNF</label><input id="rUSD" type="number" min="1" step="1" required></div>
+        <div><label for="rEUR">1 euro (EUR) = … GNF</label><input id="rEUR" type="number" min="1" step="1" required></div>
+        <div><label for="rPct">Commission (%)</label><input id="rPct" type="number" min="0" max="50" step="0.5" required></div>
+        <div><label for="rMin">Commission minimum (GNF)</label><input id="rMin" type="number" min="0" step="10000" required></div>
+        <div><label for="rArr">Arrondi des prix (GNF)</label><input id="rArr" type="number" min="1000" step="1000" required></div>
+        <div><label for="rVal">Validité d'une recherche (minutes)</label><input id="rVal" type="number" min="10" max="1440" required></div>
+        <div><label for="rMar">Marché des prix (code pays)</label><input id="rMar" maxlength="2" required></div>
+      </div>
+      <button class="btn btn-navy w100" style="margin-top:14px" type="submit">Enregistrer</button>
+      <p class="muted" id="regMaj" style="margin-top:8px"></p>
+    </form>
+  </section>
+</main>
+
+<dialog id="dlg">
+  <div class="dh"><b id="dTitle" style="color:var(--navy)"></b><button class="btn btn-ghost" id="dClose" type="button" aria-label="Fermer">✕</button></div>
+  <div class="db" id="dBody"></div>
+</dialog>
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const C = window.VF_CONFIG;
+const sb = window.supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY);
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const gnf = n => (n==null ? '—' : Math.round(n).toLocaleString('fr-FR').replace(/[  ]/g,' ') + ' GNF');
+const LIB = { nouvelle:'Nouvelle', en_cours:'En cours', confirmee:'Prix confirmé', billet_envoye:'Billet envoyé', annulee:'Annulée' };
+const pill = s => `<span class="pill st-${s}">${LIB[s]||s}</span>`;
+function toast(t){ const el=$('#toast'); el.textContent=t; el.style.display='block'; clearTimeout(toast.t); toast.t=setTimeout(()=>el.style.display='none',2600); }
+let DEM = [], filtre = 'actives', timer = null;
+
+function vue(id){ ['vLogin','vWait','vDem','vReg'].forEach(v => $('#'+v).hidden = v!==id); $('#tabs').hidden = !(id==='vDem'||id==='vReg');
+  $('#tDem').setAttribute('aria-selected', id==='vDem'); $('#tReg').setAttribute('aria-selected', id==='vReg'); }
+
+/* ---------- Connexion ---------- */
+async function demarrer(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ vue('vLogin'); return; }
+  const { data: ag } = await sb.from('agents').select('user_id').eq('user_id', session.user.id).maybeSingle();
+  if(!ag){ $('#uid').textContent = session.user.id; vue('vWait'); return; }
+  vue('vDem'); await charger(); clearInterval(timer); timer = setInterval(charger, 30000);
+}
+$('#fLogin').addEventListener('submit', async e => {
+  e.preventDefault(); $('#eLogin').hidden = true;
+  const { error } = await sb.auth.signInWithPassword({ email: $('#em').value.trim(), password: $('#pw').value });
+  if(error){ $('#eLogin').textContent = 'Connexion impossible : e-mail ou mot de passe incorrect.'; $('#eLogin').hidden = false; return; }
+  demarrer();
+});
+$('#bSignup').onclick = async () => {
+  $('#eLogin').hidden = true;
+  const email = $('#em').value.trim(), password = $('#pw').value;
+  if(!email || password.length < 8){ $('#eLogin').textContent = 'Indiquez un e-mail et un mot de passe d\'au moins 8 caractères.'; $('#eLogin').hidden = false; return; }
+  const { error } = await sb.auth.signUp({ email, password });
+  if(error){ $('#eLogin').textContent = 'Création impossible : ' + error.message; $('#eLogin').hidden = false; return; }
+  toast('Compte créé. Vérifiez votre boîte e-mail si une confirmation est demandée.');
+  demarrer();
+};
+$('#tOut').onclick = async () => { clearInterval(timer); await sb.auth.signOut(); vue('vLogin'); };
+$('#tDem').onclick = () => { vue('vDem'); charger(); };
+$('#tReg').onclick = () => { vue('vReg'); chargerReglages(); };
+
+/* ---------- Demandes ---------- */
+async function charger(){
+  const { data, error } = await sb.from('demandes').select('*').order('cree', { ascending:false }).limit(300);
+  if(error){ toast('Chargement impossible'); return; }
+  const avant = new Set(DEM.filter(d=>d.statut==='nouvelle').map(d=>d.id));
+  DEM = data || [];
+  if(DEM.some(d => d.statut==='nouvelle' && !avant.has(d.id)) && avant.size) toast('🔔 Nouvelle demande');
+  afficher();
+}
+function afficher(){
+  const mois = new Date().toISOString().slice(0,7);
+  $('#kNew').textContent = DEM.filter(d=>d.statut==='nouvelle').length;
+  $('#kCours').textContent = DEM.filter(d=>d.statut==='en_cours'||d.statut==='confirmee').length;
+  const env = DEM.filter(d=>d.statut==='billet_envoye' && (d.maj||'').slice(0,7)===mois);
+  $('#kEnv').textContent = env.length;
+  $('#kCom').textContent = gnf(env.reduce((s,d)=> s + (d.prix_final_gnf!=null ? Math.max(0, d.prix_final_gnf - (d.prix_indicatif_gnf - d.commission_gnf)) : d.commission_gnf), 0));
+  const l = DEM.filter(d => filtre==='toutes' || (filtre==='actives' ? ['nouvelle','en_cours','confirmee'].includes(d.statut) : d.statut===filtre));
+  $('#list').innerHTML = l.length ? l.map(d => `<button class="item" type="button" data-id="${esc(d.id)}">
+     <div><b>${esc(d.id)}</b> · ${esc(d.trajet)}<div class="muted">${esc(d.passagers.map(p=>p.prenom+' '+p.nom).join(', '))} · ${esc(d.telephone)}</div>
+     <div class="muted">${esc(new Date(d.cree).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}))}${d.notif_ok?'':' · ⚠️ alerte WhatsApp non envoyée'}</div></div>
+     <div style="text-align:right">${pill(d.statut)}<div style="margin-top:6px"><b>${gnf(d.prix_final_gnf ?? d.prix_indicatif_gnf)}</b></div></div></button>`).join('')
+    : '<div class="panel muted">Aucune demande ici pour l\'instant.</div>';
+  $('#list').querySelectorAll('.item').forEach(b => b.onclick = () => ouvrir(b.dataset.id));
+}
+document.querySelectorAll('#filters button').forEach(b => b.onclick = () => { filtre = b.dataset.f; document.querySelectorAll('#filters button').forEach(x => x.setAttribute('aria-pressed', x===b)); afficher(); });
+$('#refresh').onclick = e => { e.preventDefault(); charger(); };
+
+const hm = iso => (iso||'').slice(11,16);
+const dj = iso => { const d=new Date((iso||'').slice(0,10)+'T12:00:00'); return isNaN(d)?'':d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short',year:'numeric'}); };
+function leg(t, titre){ if(!t) return ''; return `<div><b>${titre}</b> · ${esc(dj(t.depart_heure))}<br>${esc(hm(t.depart_heure))} ${esc(t.depart_aeroport)} → ${esc(hm(t.arrivee_heure))} ${esc(t.arrivee_aeroport)} · ${esc(t.vols.join(' + '))} · ${t.escales? t.escales+' escale(s) '+esc(t.escales_aeroports.join(', ')) : 'direct'}<br><span class="muted">${esc(t.compagnie)}</span></div>`; }
+const waClient = (tel, texte) => 'https://wa.me/' + String(tel).replace(/\D/g,'') + '?text=' + encodeURIComponent(texte);
+
+function ouvrir(id){
+  const d = DEM.find(x => x.id===id); if(!d) return;
+  const o = d.offre;
+  const paxTxt = d.passagers.map((p,k)=>`${k+1}. ${p.nom} ${p.prenom}${p.naissance?' (né(e) le '+p.naissance+')':''}`).join('\n');
+  $('#dTitle').textContent = d.id + ' · ' + d.trajet;
+  $('#dBody').innerHTML = `
+   <div class="box">${leg(o.aller,'Aller')}${o.retour?'<hr style="border:0;border-top:1px solid #d5e1ef;margin:8px 0">'+leg(o.retour,'Retour'):''}</div>
+   <div class="box"><b>Passagers</b><pre style="white-space:pre-wrap;font:inherit;margin-top:4px">${esc(paxTxt)}</pre><button class="btn btn-ghost" type="button" id="cpPax">Copier les passagers</button></div>
+   <div class="box"><div class="row"><span>Client WhatsApp</span><b>${esc(d.telephone)}</b></div>${d.email?`<div class="row"><span>E-mail</span><span>${esc(d.email)}</span></div>`:''}${d.message_client?`<div style="margin-top:6px">💬 ${esc(d.message_client)}</div>`:''}</div>
+   <div class="box"><div class="row"><span>Prix affiché au client</span><b>${gnf(d.prix_indicatif_gnf)}</b></div><div class="row"><span>dont commission</span><span>${gnf(d.commission_gnf)}</span></div><div class="row"><span>Prix trouvé</span><span>${o.prix_source ? esc(o.prix_source.montant+' '+o.prix_source.devise) : '—'}</span></div></div>
+   <div class="grid">
+     <div><label for="xSt">Statut</label><select id="xSt">${Object.entries(LIB).map(([k,v])=>`<option value="${k}"${k===d.statut?' selected':''}>${v}</option>`).join('')}</select></div>
+     <div><label for="xPf">Prix final au client (GNF)</label><input id="xPf" type="number" min="0" step="5000" value="${d.prix_final_gnf ?? ''}" placeholder="${d.prix_indicatif_gnf}"></div>
+     <div><label for="xRef">Référence billet / PNR</label><input id="xRef" maxlength="40" value="${esc(d.billet_ref ?? '')}"></div>
+   </div>
+   <div><label for="xNo">Notes internes</label><textarea id="xNo" rows="2" maxlength="1000">${esc(d.notes ?? '')}</textarea></div>
+   <button class="btn btn-navy" type="button" id="xSave">Enregistrer</button>
+   <div class="acts">
+     <a class="btn btn-wa" target="_blank" rel="noopener" id="waPrix">WhatsApp : prix confirmé</a>
+     <a class="btn btn-wa" target="_blank" rel="noopener" id="waBillet">WhatsApp : billet prêt</a>
+     <a class="btn btn-ghost" href="tel:${esc(d.telephone)}">Appeler</a>
+   </div>
+   <p class="muted">Joignez le billet (PDF) dans la conversation WhatsApp qui s'ouvre.</p>`;
+  const majLiens = () => {
+    const pf = +$('#xPf').value || d.prix_indicatif_gnf, ref = $('#xRef').value.trim();
+    $('#waPrix').href = waClient(d.telephone, `Bonjour, ici VOYAGE FACILE ✈️\nVotre demande ${d.id} (${d.trajet}) : le prix est confirmé avec la compagnie à ${gnf(pf)} pour ${d.passagers.length} passager(s).\n${C.AGENCE_ORANGE_MONEY ? 'Pour bloquer votre place, payez par Orange Money au ' + C.AGENCE_ORANGE_MONEY + ' ou en agence, puis envoyez-nous la confirmation du paiement.' : 'Pour bloquer votre place, votre conseiller vous indique comment payer (Orange Money ou en agence).'}\nAttention : nous ne vous demanderons jamais votre code secret.`);
+    $('#waBillet').href = waClient(d.telephone, `Bonjour, ici VOYAGE FACILE ✈️\nVotre billet est prêt ! Référence de réservation : ${ref || '…'}\nTrajet : ${d.trajet}\nVous trouverez le billet électronique ci-joint. Bon voyage, et merci de votre confiance. Partez sans souci !`);
+  };
+  majLiens(); $('#xPf').oninput = majLiens; $('#xRef').oninput = majLiens;
+  $('#cpPax').onclick = async () => { try { await navigator.clipboard.writeText(paxTxt); toast('Passagers copiés'); } catch(e){ toast('Copie impossible'); } };
+  $('#xSave').onclick = async () => {
+    const maj = { statut: $('#xSt').value, prix_final_gnf: $('#xPf').value ? Math.round(+$('#xPf').value) : null, billet_ref: $('#xRef').value.trim() || null, notes: $('#xNo').value.trim() || null, maj: new Date().toISOString() };
+    const { error } = await sb.from('demandes').update(maj).eq('id', d.id);
+    if(error){ toast('Enregistrement impossible'); return; }
+    Object.assign(d, maj); afficher(); toast('Enregistré'); $('#dlg').close();
+  };
+  $('#dlg').showModal();
+}
+$('#dClose').onclick = () => $('#dlg').close();
+
+/* ---------- Réglages ---------- */
+async function chargerReglages(){
+  const { data, error } = await sb.from('reglages').select('*').eq('id',1).single();
+  if(error || !data){ toast('Réglages inaccessibles'); return; }
+  $('#rUSD').value = data.taux?.USD ?? ''; $('#rEUR').value = data.taux?.EUR ?? '';
+  $('#rPct').value = data.commission_pct; $('#rMin').value = data.commission_min; $('#rArr').value = data.arrondi;
+  $('#rVal').value = data.duree_validite_min; $('#rMar').value = data.marche;
+  $('#regMaj').textContent = 'Dernière mise à jour : ' + new Date(data.maj).toLocaleString('fr-FR');
+}
+$('#fReg').addEventListener('submit', async e => {
+  e.preventDefault();
+  const maj = { taux: { USD: +$('#rUSD').value, EUR: +$('#rEUR').value }, commission_pct: +$('#rPct').value, commission_min: Math.round(+$('#rMin').value),
+    arrondi: Math.max(1, Math.round(+$('#rArr').value)), duree_validite_min: Math.round(+$('#rVal').value), marche: $('#rMar').value.trim().toUpperCase(), maj: new Date().toISOString() };
+  const { error } = await sb.from('reglages').update(maj).eq('id',1);
+  if(error){ toast('Enregistrement impossible : ' + error.message); return; }
+  toast('Réglages enregistrés'); chargerReglages();
+});
+
+sb.auth.onAuthStateChange((ev) => { if(ev==='SIGNED_OUT') vue('vLogin'); });
+demarrer();
+</script>
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Réserver un billet d'avion – VOYAGE FACILE</title>
+<meta name="description" content="Cherchez votre vol au départ de Conakry, voyez le prix en GNF et réservez avec VOYAGE FACILE. Partez sans souci.">
+<link rel="icon" href="icone.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.search{display:grid;gap:12px}
+.trip{display:flex;gap:8px;flex-wrap:wrap}
+.trip label{display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:15px;color:var(--ink);background:var(--sky);padding:9px 14px;border-radius:999px;cursor:pointer;margin:0;min-height:42px}
+.trip input{width:auto;min-height:0}
+.ac{position:relative}
+.ac ul{position:absolute;z-index:10;left:0;right:0;top:100%;background:#fff;border:1px solid var(--line);border-radius:12px;margin-top:4px;list-style:none;max-height:280px;overflow:auto;box-shadow:0 12px 30px rgba(11,37,69,.12)}
+.ac li{padding:10px 12px;cursor:pointer;border-bottom:1px solid #f0f3f7}
+.ac li:hover,.ac li[aria-selected="true"]{background:var(--sky)}
+.ac li b{color:var(--navy)}
+.results{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+.offer{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+.offer.sel{border-color:var(--or);box-shadow:0 0 0 2px rgba(242,140,40,.25)}
+.leg{display:flex;align-items:center;gap:10px;margin:4px 0}
+.leg .t{font-weight:700;color:var(--navy);font-size:17px;min-width:48px}
+.leg .line{flex:1;height:2px;background:var(--line);position:relative;min-width:40px}
+.leg .line span{position:absolute;left:50%;top:-11px;transform:translateX(-50%);font-size:11px;color:var(--muted);background:#fff;padding:0 4px;white-space:nowrap}
+.price{text-align:right}
+.price b{font-family:'Montserrat',sans-serif;color:var(--navy);font-size:20px;display:block;white-space:nowrap}
+@media(max-width:560px){.offer{grid-template-columns:1fr}.price{text-align:left;display:flex;justify-content:space-between;align-items:center;gap:10px}}
+.steps{display:flex;gap:6px;margin:4px 0 14px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.steps span{padding:4px 10px;border-radius:999px;background:#e9eef5}
+.steps span.on{background:var(--navy);color:#fff}
+.pax{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.pax h4{color:var(--navy);font-size:14px;margin-bottom:8px}
+.recap{background:var(--sky);border-radius:12px;padding:12px;margin-bottom:12px;font-size:14px}
+.check{display:flex;gap:10px;align-items:flex-start;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);font-weight:500;margin:12px 0}
+.check input{width:22px;height:22px;min-height:0;flex:0 0 auto;margin-top:1px}
+.loading{display:flex;align-items:center;gap:10px;color:var(--muted);padding:18px 4px}
+.spin{width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--or);border-radius:50%;animation:s 0.8s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="hrow">
+    <a class="brand" href="index.html" aria-label="VOYAGE FACILE – accueil"><svg width="40" height="40" viewBox="14 0 112 112" aria-hidden="true"><path d="M56 100 C56 100 22 70 22 45 C22 26 37 11 56 11 C75 11 90 26 90 45 C90 70 56 100 56 100 Z" fill="#ffffff"/><path d="M56 100 C56 100 22 70 22 45 C22 26 37 11 56 11 Z" fill="#dfe8f3"/><path d="M40 46 L52 58 L73 35" fill="none" stroke="#0b2545" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/><path transform="translate(96 18) rotate(-40) scale(1.25)" d="M17 0 C17 -1.5 15.6 -2.5 13 -2.5 L4.6 -2.5 L-4.8 -15.5 L-8.8 -15.5 L-3.4 -2.5 L-10.4 -2.5 L-13.8 -7.6 L-16.4 -7.6 L-14.4 -2 L-15.4 0 L-14.4 2 L-16.4 7.6 L-13.8 7.6 L-10.4 2.5 L-3.4 2.5 L-8.8 15.5 L-4.8 15.5 L4.6 2.5 L13 2.5 C15.6 2.5 17 1.5 17 0 Z" fill="#f28c28"/></svg><span><b>VOYAGE <span>FACILE</span></b><small>PARTEZ SANS SOUCI</small></span></a>
+    <a class="wa-top" id="waTop" href="#">WhatsApp</a>
+  </div>
+</header>
+
+<main>
+  <div class="steps" aria-label="Étapes"><span id="st1" class="on">1. Chercher</span><span id="st2">2. Choisir</span><span id="st3">3. Passagers</span><span id="st4">4. Confirmé</span></div>
+
+  <!-- 1. RECHERCHE -->
+  <section id="vSearch">
+    <h1>Trouvez votre billet d'avion</h1>
+    <p class="sub">Prix réels du jour, en GNF, commission de l'agence comprise.</p>
+    <form class="panel search" id="fSearch" novalidate>
+      <div class="trip" role="radiogroup" aria-label="Type de voyage">
+        <label><input type="radio" name="trip" value="ar" checked> Aller-retour</label>
+        <label><input type="radio" name="trip" value="as"> Aller simple</label>
+      </div>
+      <div class="grid">
+        <div class="ac"><label for="from">Départ</label><input id="from" autocomplete="off" value="Conakry (CKY)" data-code="CKY" required><ul id="fromList" role="listbox" hidden></ul></div>
+        <div class="ac"><label for="to">Destination</label><input id="to" autocomplete="off" placeholder="Ville ou aéroport" required><ul id="toList" role="listbox" hidden></ul></div>
+        <div><label for="d1">Départ le</label><input id="d1" type="date" required></div>
+        <div id="d2box"><label for="d2">Retour le</label><input id="d2" type="date"></div>
+        <div><label for="ad">Adultes</label><select id="ad"></select></div>
+        <div><label for="ch">Enfants (2-11 ans)</label><select id="ch"></select></div>
+        <div><label for="cl">Classe</label><select id="cl"><option value="economy">Économique</option><option value="premium_economy">Éco premium</option><option value="business">Affaires</option><option value="first">Première</option></select></div>
+      </div>
+      <button class="btn btn-or w100" type="submit" id="bSearch">Rechercher les vols</button>
+      <div class="err" id="eSearch" hidden></div>
+    </form>
+    <div id="loading" class="loading" hidden><div class="spin"></div>Recherche des meilleurs vols…</div>
+    <div class="results" id="results"></div>
+  </section>
+
+  <!-- 3. PASSAGERS -->
+  <section id="vPax" hidden>
+    <h1>Vos informations</h1>
+    <p class="sub">Écrivez les noms exactement comme sur le passeport.</p>
+    <form class="panel" id="fPax" novalidate>
+      <div class="recap" id="recap"></div>
+      <div id="paxList"></div>
+      <div class="grid">
+        <div><label for="tel">Votre numéro WhatsApp</label><input id="tel" type="tel" inputmode="tel" placeholder="+224 6__ __ __ __" required></div>
+        <div><label for="mail">E-mail (facultatif)</label><input id="mail" type="email" inputmode="email"></div>
+      </div>
+      <div style="margin-top:12px"><label for="msg">Message pour l'agence (facultatif)</label><textarea id="msg" rows="2" maxlength="500" placeholder="Bagages, siège, besoin particulier…"></textarea></div>
+      <label class="check"><input type="checkbox" id="ok"> <span>Je confirme ma demande. Un conseiller vérifie le prix avec la compagnie et me contacte sur WhatsApp avant tout paiement. Mes informations servent uniquement à cette réservation.</span></label>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-ghost" type="button" id="bBack">← Changer de vol</button>
+        <button class="btn btn-or" type="submit" id="bSend" style="flex:1">Envoyer ma demande</button>
+      </div>
+      <div class="err" id="ePax" hidden></div>
+    </form>
+  </section>
+
+  <!-- 4. CONFIRMÉ -->
+  <section id="vDone" hidden>
+    <div class="panel">
+      <div class="ok"><b>✅ Demande envoyée !</b><br>Référence : <b id="ref"></b></div>
+      <p style="margin:14px 0 6px">Un conseiller VOYAGE FACILE vérifie le prix et les places avec la compagnie, puis vous écrit sur WhatsApp au <b id="telDone"></b>.</p>
+      <p class="muted">Ne payez rien avant d'avoir reçu la confirmation de votre conseiller. Nous ne vous demanderons jamais votre code secret Orange Money.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+        <a class="btn btn-wa" id="waDone" href="#">Écrire à l'agence sur WhatsApp</a>
+        <button class="btn btn-ghost" type="button" id="bNew">Nouvelle recherche</button>
+      </div>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+const C = window.VF_CONFIG;
+const API = C.SUPABASE_URL + "/functions/v1/vf-api";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const gnf = n => Math.round(n).toLocaleString('fr-FR').replace(/[  ]/g,' ') + ' GNF';
+const waLink = t => 'https://wa.me/' + C.AGENCE_WHATSAPP + '?text=' + encodeURIComponent(t);
+let RECH = null, CHOIX = null, PARAMS = null;
+
+$('#waTop').href = waLink("Bonjour VOYAGE FACILE, j'ai une question sur un billet.");
+
+async function api(action, data){
+  const r = await fetch(API, { method:'POST', headers:{ 'Content-Type':'application/json', 'apikey':C.SUPABASE_ANON_KEY, 'Authorization':'Bearer ' + C.SUPABASE_ANON_KEY },
+    body: JSON.stringify({ action, ...data }) });
+  let j = {}; try { j = await r.json(); } catch(e){}
+  if(!r.ok) throw new Error(j.erreur || "Le service ne répond pas. Réessayez ou écrivez-nous sur WhatsApp.");
+  return j;
+}
+function etape(n){ [1,2,3,4].forEach(k => $('#st'+k).classList.toggle('on', k===n)); window.scrollTo({top:0, behavior:'smooth'}); }
+function show(id){ ['vSearch','vPax','vDone'].forEach(v => $('#'+v).hidden = v!==id); }
+
+/* ----- champs ----- */
+for(let i=1;i<=9;i++) $('#ad').insertAdjacentHTML('beforeend', `<option>${i}</option>`);
+for(let i=0;i<=8;i++) $('#ch').insertAdjacentHTML('beforeend', `<option>${i}</option>`);
+const today = new Date().toISOString().slice(0,10);
+$('#d1').min = today; $('#d2').min = today;
+document.querySelectorAll('input[name=trip]').forEach(r => r.onchange = () => { $('#d2box').hidden = document.querySelector('input[name=trip]:checked').value==='as'; });
+$('#d1').onchange = () => { $('#d2').min = $('#d1').value || today; if($('#d2').value && $('#d2').value < $('#d1').value) $('#d2').value=''; };
+
+/* ----- suggestions d'aéroports ----- */
+function autocomplete(inp, list){
+  let t = null, items = [], idx = -1;
+  const close = () => { list.hidden = true; idx = -1; };
+  const pick = a => { inp.value = `${a.ville} (${a.code})`; inp.dataset.code = a.code; close(); };
+  inp.addEventListener('input', () => {
+    inp.dataset.code = ''; clearTimeout(t);
+    const q = inp.value.trim(); if(q.length < 2){ close(); return; }
+    t = setTimeout(async () => {
+      try {
+        const j = await api('aeroports', { q });
+        items = j.aeroports || [];
+        list.innerHTML = items.length ? items.map((a,i) => `<li role="option" data-i="${i}"><b>${esc(a.ville)}</b> (${esc(a.code)})<div class="muted">${esc(a.nom)} · ${esc(a.pays)}</div></li>`).join('') : '<li class="muted">Aucun aéroport trouvé</li>';
+        list.hidden = false;
+        list.querySelectorAll('li[data-i]').forEach(li => li.onmousedown = e => { e.preventDefault(); pick(items[li.dataset.i]); });
+      } catch(e){ close(); }
+    }, 300);
+  });
+  inp.addEventListener('keydown', e => {
+    const lis = list.querySelectorAll('li[data-i]'); if(list.hidden || !lis.length) return;
+    if(e.key==='ArrowDown'){ idx = Math.min(idx+1, lis.length-1); } else if(e.key==='ArrowUp'){ idx = Math.max(idx-1, 0); }
+    else if(e.key==='Enter' && idx>=0){ e.preventDefault(); pick(items[idx]); return; } else return;
+    e.preventDefault(); lis.forEach((li,k) => li.setAttribute('aria-selected', k===idx));
+  });
+  inp.addEventListener('blur', () => setTimeout(close, 150));
+  inp.addEventListener('focus', () => { if(inp.dataset.code) inp.select(); });
+}
+autocomplete($('#from'), $('#fromList'));
+autocomplete($('#to'), $('#toList'));
+
+/* ----- recherche ----- */
+const heure = iso => (iso||'').slice(11,16);
+const jour = iso => { const d = new Date((iso||'').slice(0,10)+'T12:00:00'); return isNaN(d) ? '' : d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}); };
+const duree = m => m ? `${Math.floor(m/60)} h ${String(m%60).padStart(2,'0')}` : '';
+const escales = t => t.escales ? `${t.escales} escale${t.escales>1?'s':''} · ${t.escales_aeroports.join(', ')}` : 'Direct';
+function legHTML(t, titre){
+  if(!t) return '';
+  const lendemain = t.arrivee_heure.slice(0,10) !== t.depart_heure.slice(0,10) ? ' <span class="muted">+1</span>' : '';
+  return `<div class="muted">${titre} · ${esc(jour(t.depart_heure))} · ${esc(t.compagnie)}</div>
+   <div class="leg"><span class="t">${esc(heure(t.depart_heure))}</span><span class="muted">${esc(t.depart_aeroport)}</span>
+   <span class="line"><span>${esc(duree(t.duree_min))} · ${esc(escales(t))}</span></span>
+   <span class="muted">${esc(t.arrivee_aeroport)}</span><span class="t">${esc(heure(t.arrivee_heure))}${lendemain}</span></div>`;
+}
+function bagages(o){ if(!o.bagages) return ''; const b=o.bagages; const p=[]; if(b.cabine!=null) p.push(b.cabine+' bagage cabine'); if(b.soute!=null) p.push(b.soute ? b.soute+' en soute' : 'pas de bagage en soute'); return p.length ? `<div class="muted">🧳 ${esc(p.join(' · '))}</div>` : ''; }
+
+$('#fSearch').addEventListener('submit', async e => {
+  e.preventDefault(); $('#eSearch').hidden = true;
+  const ar = document.querySelector('input[name=trip]:checked').value === 'ar';
+  const p = { origine: $('#from').dataset.code, destination: $('#to').dataset.code, date_aller: $('#d1').value,
+              date_retour: ar ? $('#d2').value : null, adultes: +$('#ad').value, enfants: +$('#ch').value, classe: $('#cl').value };
+  const errs = [];
+  if(!p.origine) errs.push('choisissez la ville de départ dans la liste');
+  if(!p.destination) errs.push('choisissez la destination dans la liste');
+  if(!p.date_aller) errs.push('indiquez la date de départ');
+  if(ar && !p.date_retour) errs.push('indiquez la date de retour');
+  if(errs.length){ $('#eSearch').textContent = 'Merci de compléter : ' + errs.join(', ') + '.'; $('#eSearch').hidden = false; return; }
+  $('#bSearch').disabled = true; $('#results').innerHTML = ''; $('#loading').hidden = false;
+  try {
+    const j = await api('recherche', p);
+    PARAMS = p; RECH = j;
+    if(!j.offres || !j.offres.length){ $('#results').innerHTML = `<div class="panel">${esc(j.message || 'Aucun vol trouvé.')} <a href="${waLink('Bonjour, je cherche un vol ' + p.origine + ' → ' + p.destination + ' le ' + p.date_aller)}">Demander à un conseiller</a></div>`; return; }
+    $('#results').innerHTML = `<p class="muted">${j.offres.length} vol(s) trouvé(s) · prix pour ${p.adultes + p.enfants} passager(s), commission comprise. Prix indicatif, confirmé par votre conseiller avant paiement.</p>` +
+      j.offres.map(o => `<article class="offer"><div>${legHTML(o.aller,'Aller')}${legHTML(o.retour,'Retour')}${bagages(o)}</div>
+        <div class="price"><div><b>${gnf(o.total_gnf)}</b><span class="muted">total</span></div><button class="btn btn-or" type="button" data-i="${o.i}">Choisir</button></div></article>`).join('');
+    $('#results').querySelectorAll('button[data-i]').forEach(b => b.onclick = () => choisir(+b.dataset.i));
+    etape(2); $('#results').scrollIntoView({behavior:'smooth'});
+  } catch(err){ $('#eSearch').textContent = err.message; $('#eSearch').hidden = false; }
+  finally { $('#bSearch').disabled = false; $('#loading').hidden = true; }
+});
+
+/* ----- passagers ----- */
+function choisir(i){
+  CHOIX = RECH.offres.find(o => o.i === i); if(!CHOIX) return;
+  const n = PARAMS.adultes + PARAMS.enfants; let h = '';
+  for(let k=0;k<n;k++){
+    const enfant = k >= PARAMS.adultes;
+    h += `<div class="pax"><h4>Passager ${k+1}${enfant?' (enfant)':''}</h4><div class="grid">
+      <div><label for="pp${k}">Prénom(s)</label><input id="pp${k}" autocomplete="given-name" required></div>
+      <div><label for="pn${k}">Nom</label><input id="pn${k}" autocomplete="family-name" required></div>
+      <div><label for="pd${k}">Date de naissance${enfant?'':' (facultatif)'}</label><input id="pd${k}" type="date" max="${today}"${enfant?' required':''}></div></div></div>`;
+  }
+  $('#paxList').innerHTML = h;
+  $('#recap').innerHTML = `${legHTML(CHOIX.aller,'Aller')}${legHTML(CHOIX.retour,'Retour')}<div style="margin-top:6px"><b>Total indicatif : ${gnf(CHOIX.total_gnf)}</b> <span class="muted">(${n} passager(s), commission comprise)</span></div>`;
+  $('#ePax').hidden = true; show('vPax'); etape(3);
+}
+$('#bBack').onclick = () => { show('vSearch'); etape(2); };
+
+$('#fPax').addEventListener('submit', async e => {
+  e.preventDefault(); $('#ePax').hidden = true;
+  const n = PARAMS.adultes + PARAMS.enfants, passagers = [];
+  for(let k=0;k<n;k++){
+    const prenom = $('#pp'+k).value.trim(), nom = $('#pn'+k).value.trim(), naissance = $('#pd'+k).value || null;
+    if(!prenom || !nom){ return fail(`Passager ${k+1} : indiquez le prénom et le nom.`); }
+    if(k >= PARAMS.adultes && !naissance){ return fail(`Passager ${k+1} : la date de naissance de l'enfant est nécessaire.`); }
+    passagers.push({ prenom, nom, naissance });
+  }
+  if(!$('#tel').value.trim()) return fail('Indiquez votre numéro WhatsApp.');
+  if(!$('#ok').checked) return fail('Cochez la case pour confirmer votre demande.');
+  $('#bSend').disabled = true; $('#bSend').textContent = 'Envoi…';
+  try {
+    const j = await api('demande', { recherche_id: RECH.recherche_id, offre: CHOIX.i, passagers, telephone: $('#tel').value, email: $('#mail').value || null, message: $('#msg').value || null, accord: true });
+    $('#ref').textContent = j.reference; $('#telDone').textContent = $('#tel').value;
+    $('#waDone').href = waLink(`Bonjour VOYAGE FACILE, je viens d'envoyer la demande ${j.reference} (${PARAMS.origine} → ${PARAMS.destination}, ${gnf(j.total_gnf)}).`);
+    show('vDone'); etape(4);
+  } catch(err){ fail(err.message); }
+  finally { $('#bSend').disabled = false; $('#bSend').textContent = 'Envoyer ma demande'; }
+});
+function fail(m){ $('#ePax').textContent = m; $('#ePax').hidden = false; }
+$('#bNew').onclick = () => { $('#results').innerHTML=''; $('#fPax').reset(); show('vSearch'); etape(1); };
+
+/* ----- pré-remplissage depuis la page d'accueil (?to=CDG&d1=...) ----- */
+const q = new URLSearchParams(location.search);
+if(q.get('d1')) $('#d1').value = q.get('d1');
+if(q.get('d2')) $('#d2').value = q.get('d2');
+if(q.get('trip')==='as'){ document.querySelector('input[value=as]').checked = true; $('#d2box').hidden = true; }
+if(q.get('ad')) { const n = Math.min(9, Math.max(1, parseInt(q.get('ad')) || 1)); $('#ad').value = String(n); }
+if(q.get('to')) {
+  $('#to').value = q.get('to');
+  // On retrouve l'aéroport tout seul : le client n'a plus qu'à appuyer sur « Rechercher ».
+  api('aeroports', { q: q.get('to') }).then(j => {
+    const a = (j.aeroports || [])[0];
+    if (a && !$('#to').dataset.code) { $('#to').value = `${a.ville} (${a.code})`; $('#to').dataset.code = a.code; }
+  }).catch(() => {});
+}
+</script>
+</body>
+</html>
