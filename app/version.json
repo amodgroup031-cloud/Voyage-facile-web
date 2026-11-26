@@ -1,11 +1,11 @@
 {
-  "web": "2026.11.26.4",
+  "web": "2026.11.26.5",
   "notes": [
     "Espace agence : connexion directe avec l'e-mail de l'agence et le mot de passe administrateur, comme GUINEE TOURS",
-    "Recherche de vols plus patiente quand les compagnies répondent lentement"
+    "Connexion plus tolérante aux fautes du clavier (majuscule automatique, espace en trop)"
   ],
-  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.26.4.zip",
-  "checksum": "1b29b98c0874d6f4ac6a9e5d8a6de25a1feb6725409d24f215a542e099c19633",
+  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.26.5.zip",
+  "checksum": "7c57795e6584a07e1d82b807069658a5ded126fa70ef8689ced7d82caa52682c",
   "native_min": 18,
   "apk": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/Voyage-Facile.apk",
   "apk_version": "1.0.18"
