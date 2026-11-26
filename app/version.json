@@ -1,0 +1,14 @@
+{
+  "web": "2026.11.26.2",
+  "notes": [
+    "Mises à jour automatiques : plus besoin de réinstaller l'application",
+    "Prix affichés dans la monnaie de votre pays (modifiable dans Aide)",
+    "Civilité « Mademoiselle » ajoutée",
+    "Espace agence accessible depuis l'accueil, avec l'e-mail de l'agence"
+  ],
+  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.26.2.zip",
+  "checksum": "ea2993d55f17c8303eb30f487797f23acdb6cf12d6931b5591cfda24b5e59468",
+  "native_min": 18,
+  "apk": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/Voyage-Facile.apk",
+  "apk_version": "1.0.18"
+}
