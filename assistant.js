@@ -11,7 +11,9 @@
   const URL_IA = CFG.SUPABASE_URL + '/functions/v1/vf-ia';
   const URL_API = CFG.SUPABASE_URL + '/functions/v1/vf-api';
   const ech = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const fgnf = n => Math.round(n).toLocaleString('fr-FR').replace(/[  ]/g, ' ') + ' GNF';
+  const fgnf = n => window.Devise ? Devise.html(n) : Math.round(n).toLocaleString('fr-FR').replace(/[\u00a0\u202f]/g, ' ') + ' GNF';
+  const titre = c => ({ m: 'M. ', f: 'Mme ', mlle: 'Mlle ' }[c] || '');
+  const dev = () => window.Devise ? Devise.code() : 'GNF';
   const ouvrirLien = url => (window.ouvrir ? window.ouvrir(url) : window.open(url, '_blank'));
   const lire = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
   const ecrire = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
@@ -75,7 +77,7 @@
     const fait = c.envoye;
     d.innerHTML = `<h4>📝 Vérifiez votre demande</h4>${ligne(c.offre.aller, 'Aller')}${ligne(c.offre.retour, 'Retour')}
       <div class="muted" style="margin-top:6px">${ech(c.offre.aller.compagnie)}</div>
-      <div style="margin:6px 0"><b>Passager(s) :</b> ${c.passagers.map(p => ech(p.prenom + ' ' + p.nom)).join(', ')}</div>
+      <div style="margin:6px 0"><b>Passager(s) :</b> ${c.passagers.map(p => ech(titre(p.civilite) + p.prenom + ' ' + p.nom)).join(', ')}</div>
       <div><b>WhatsApp :</b> ${ech(c.telephone)}</div>
       <div class="ia-row" style="margin-top:8px"><span>Total</span><b>${fgnf(c.offre.total_gnf)}</b></div>
       ${fait ? `<div class="ok" style="margin-top:10px">✅ Demande envoyée · Référence <b>${ech(c.reference)}</b></div>`
@@ -86,7 +88,7 @@
       b.disabled = true; b.textContent = 'Envoi…';
       try {
         const r = await fetch(URL_API, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: CFG.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + CFG.SUPABASE_ANON_KEY },
-          body: JSON.stringify({ action: 'demande', recherche_id: c.recherche_id, offre: c.offre_index, passagers: c.passagers, telephone: c.telephone, email: c.email, message: c.message, accord: true }) });
+          body: JSON.stringify({ action: 'demande', devise: dev(), recherche_id: c.recherche_id, offre: c.offre_index, passagers: c.passagers, telephone: c.telephone, email: c.email, message: c.message, accord: true }) });
         const j = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(j.erreur || "L'envoi n'a pas abouti. Réessayez.");
         c.envoye = true; c.reference = j.reference;
@@ -95,7 +97,8 @@
         v.unshift({ reference: j.reference, telephone: c.telephone, trajet: c.trajet.replace(/ \(.*\)$/, ''), aller: c.offre.aller, retour: c.offre.retour,
           passagers: c.passagers.map(p => p.prenom + ' ' + p.nom), total: j.total_gnf, cree: new Date().toISOString(), statut: 'nouvelle' });
         ecrire('vf_voyages', v.slice(0, 50));
-        const note = `✅ Votre demande ${j.reference} est envoyée. Un conseiller vérifie avec la compagnie et vous écrit sur WhatsApp. Vous pouvez suivre l'avancement dans « Mes voyages ».`;
+        const w = lire('vf_web_demandes', []).filter(x => x.reference !== j.reference); w.unshift({ reference: j.reference, telephone: c.telephone }); ecrire('vf_web_demandes', w.slice(0, 20));
+        const note = `✅ Votre demande ${j.reference} est envoyée. Un conseiller vérifie avec la compagnie et vous écrit sur WhatsApp. Vous pourrez la suivre et la payer, une fois le prix confirmé, sur la page « Suivre / payer » (suivi.html).`;
         HIST.push({ role: 'assistant', content: note });
         sauver(); d.replaceWith(carteConfirmationNode(c)); bulle('bot', md(note));
       } catch (e) { b.disabled = false; b.textContent = 'Confirmer et envoyer'; bulle('sys', ech(e.message)); }
@@ -130,7 +133,7 @@
     const attente = bulle('bot', '<span class="ia-typing"><i></i><i></i><i></i></span>');
     try {
       const r = await fetch(URL_IA, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: CFG.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + CFG.SUPABASE_ANON_KEY },
-        body: JSON.stringify({ messages: HIST.map(h => ({ role: h.role, content: h.content })), etat: ETAT }) });
+        body: JSON.stringify({ messages: HIST.map(h => ({ role: h.role, content: h.content })), etat: ETAT, devise: dev() }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.erreur || "L'assistant ne répond pas. Réessayez.");
       attente.innerHTML = md(j.texte);

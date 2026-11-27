@@ -5,5 +5,6 @@ window.VF_CONFIG = {
   AGENCE_WHATSAPP: "224624727206",
   AGENCE_WHATSAPP_AFFICHE: "+224 624 72 72 06",
   AGENCE_EMAIL: "voyagefacile00@gmail.com",
+  SITE: "https://amodgroup031-cloud.github.io/Voyage-facile-web",
   AGENCE_ORANGE_MONEY: ""   // numéro marchand Orange Money, à remplir quand il sera ouvert
 };

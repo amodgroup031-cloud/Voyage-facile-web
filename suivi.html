@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Suivre et payer ma demande – VOYAGE FACILE</title>
+<meta name="description" content="Suivez votre demande de billet VOYAGE FACILE et payez par Orange Money une fois le prix confirmé.">
+<link rel="icon" href="icone.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.px-gnf{display:block;font-size:12px;font-weight:500;color:var(--muted);line-height:1.2}
+.dcard{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-top:12px}
+.dtop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.dtop b{color:var(--navy)}
+.steps4{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:10px 0 6px}
+.steps4 i{height:6px;border-radius:4px;background:#e2e8f0}.steps4 i.on{background:var(--or)}
+.r2{display:flex;justify-content:space-between;gap:10px;margin:4px 0;align-items:baseline}
+.r2 b{text-align:right;color:var(--navy)}
+.pill{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12.5px;font-weight:700;white-space:nowrap}
+.st-nouvelle{background:#fff1c2;color:#6b4f00}.st-en_cours{background:#eef4fb;color:#24456f}.st-confirmee{background:#efe9fb;color:#4b2f86}.st-billet_envoye{background:#e3f5ea;color:#165c3d}.st-annulee{background:#fde8e8;color:#8a1f1f}
+.info{border-radius:12px;padding:10px 12px;margin-top:12px;font-size:14px}
+.info.att{background:#fff4e5;color:#7a4b00}.info.non{background:#fde8e8;color:#8a1f1f}
+.oubli{background:none;border:0;color:var(--muted);text-decoration:underline;font-size:13px;cursor:pointer;margin-top:8px;min-height:36px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="hrow">
+    <a class="brand" href="index.html" aria-label="VOYAGE FACILE – accueil"><svg width="40" height="40" viewBox="14 0 112 112" aria-hidden="true"><path d="M56 100 C56 100 22 70 22 45 C22 26 37 11 56 11 C75 11 90 26 90 45 C90 70 56 100 56 100 Z" fill="#ffffff"/><path d="M56 100 C56 100 22 70 22 45 C22 26 37 11 56 11 Z" fill="#dfe8f3"/><path d="M40 46 L52 58 L73 35" fill="none" stroke="#0b2545" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/><path transform="translate(96 18) rotate(-40) scale(1.25)" d="M17 0 C17 -1.5 15.6 -2.5 13 -2.5 L4.6 -2.5 L-4.8 -15.5 L-8.8 -15.5 L-3.4 -2.5 L-10.4 -2.5 L-13.8 -7.6 L-16.4 -7.6 L-14.4 -2 L-15.4 0 L-14.4 2 L-16.4 7.6 L-13.8 7.6 L-10.4 2.5 L-3.4 2.5 L-8.8 15.5 L-4.8 15.5 L4.6 2.5 L13 2.5 C15.6 2.5 17 1.5 17 0 Z" fill="#f28c28"/></svg><span><b>VOYAGE <span>FACILE</span></b><small>PARTEZ SANS SOUCI</small></span></a>
+    <a class="wa-top" id="waTop" href="#">WhatsApp</a>
+  </div>
+</header>
+
+<main>
+  <h1>Suivre et payer ma demande</h1>
+  <p class="sub">Une fois le prix confirmé par votre conseiller, vous payez ici par Orange Money.</p>
+  <div id="bandeau"></div>
+  <div id="liste"></div>
+  <form class="panel" id="fSuivi" style="margin-top:14px" novalidate>
+    <h2 style="font-size:17px;margin-bottom:8px" id="fTitre">Retrouver une demande</h2>
+    <div class="grid">
+      <div><label for="ref">Référence de la demande</label><input id="ref" placeholder="VF-XXXXXX" autocapitalize="characters" autocomplete="off" required></div>
+      <div><label for="tel">Numéro WhatsApp utilisé</label><input id="tel" type="tel" inputmode="tel" placeholder="+224 6__ __ __ __" required></div>
+    </div>
+    <button class="btn btn-or w100" style="margin-top:12px" type="submit" id="bVoir">Voir ma demande</button>
+    <div class="err" id="eSuivi" hidden></div>
+  </form>
+  <p class="muted" style="margin-top:14px">Besoin d'aide ? <a id="waAide" href="#">Écrivez-nous sur WhatsApp</a>. Nous ne vous demanderons jamais votre code secret Orange Money.</p>
+</main>
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script src="devise.js"></script>
+<script src="paiement.js"></script>
+<script>
+const C = window.VF_CONFIG;
+const API = C.SUPABASE_URL + "/functions/v1/vf-api";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const prix = n => window.Devise ? Devise.html(n) : Math.round(n).toLocaleString('fr-FR') + ' GNF';
+const waLink = t => 'https://wa.me/' + C.AGENCE_WHATSAPP + '?text=' + encodeURIComponent(t);
+function toast(t){ const el = $('#toast'); el.textContent = t; el.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => el.style.display = 'none', 3000); }
+$('#waTop').href = waLink("Bonjour VOYAGE FACILE, j'ai une question sur ma demande.");
+$('#waAide').href = waLink("Bonjour VOYAGE FACILE, j'ai besoin d'aide pour suivre ou payer ma demande.");
+
+async function api(action, data){
+  let r;
+  try { r = await fetch(API, { method:'POST', headers:{ 'Content-Type':'application/json', 'apikey':C.SUPABASE_ANON_KEY, 'Authorization':'Bearer ' + C.SUPABASE_ANON_KEY },
+    body: JSON.stringify({ action, devise: window.Devise ? Devise.code() : 'GNF', ...data }) }); }
+  catch(e){ throw new Error("Pas de connexion Internet. Vérifiez votre réseau puis réessayez."); }
+  let j = {}; try { j = await r.json(); } catch(e){}
+  if(!r.ok) throw new Error(j.erreur || "Le service ne répond pas. Réessayez ou écrivez-nous sur WhatsApp.");
+  return j;
+}
+const memo = {
+  lire(){ try { return JSON.parse(localStorage.getItem('vf_web_demandes') || '[]'); } catch(e){ return []; } },
+  ecrire(l){ try { localStorage.setItem('vf_web_demandes', JSON.stringify(l.slice(0, 20))); } catch(e){} },
+  ajouter(ref, tel){ const l = this.lire().filter(x => x.reference !== ref); l.unshift({ reference: ref, telephone: tel }); this.ecrire(l); },
+  oublier(ref){ this.ecrire(this.lire().filter(x => x.reference !== ref)); }
+};
+
+const ETAPES = { nouvelle:1, en_cours:2, confirmee:3, billet_envoye:4, annulee:0 };
+const LIB = { nouvelle:'Reçue', en_cours:'En vérification', confirmee:'Prix confirmé', billet_envoye:'Billet envoyé', annulee:'Annulée' };
+const EXPL = {
+  nouvelle: "Votre conseiller vérifie le prix et les places avec la compagnie. Ne payez rien pour l'instant.",
+  en_cours: "Votre conseiller est en train de vérifier avec la compagnie. Ne payez rien pour l'instant.",
+  confirmee: "Le prix est confirmé : vous pouvez payer ci-dessous par Orange Money, ou en agence.",
+  billet_envoye: "Votre billet vous a été envoyé sur WhatsApp. Bon voyage !",
+  annulee: "Cette demande a été annulée. Écrivez-nous pour une nouvelle recherche."
+};
+let INFOS = null, DEM = [];
+
+function afficher(){
+  const l = memo.lire();
+  if (!DEM.length) { $('#liste').innerHTML = ''; $('#fTitre').textContent = 'Retrouver une demande'; return; }
+  $('#fTitre').textContent = 'Ajouter une autre demande';
+  $('#liste').innerHTML = DEM.map(d => {
+    const tel = (l.find(x => x.reference === d.reference) || {}).telephone || '';
+    const e = ETAPES[d.statut] ?? 1;
+    return `<div class="dcard" data-ref="${esc(d.reference)}"><div class="dtop"><div><b>${esc(d.trajet || '')}</b><div class="muted">Réf. ${esc(d.reference)}</div></div><span class="pill st-${esc(d.statut)}">${esc(LIB[d.statut] || d.statut)}</span></div>
+      ${d.statut === 'annulee' ? '' : `<div class="steps4">${[1,2,3,4].map(k => `<i class="${k <= e ? 'on' : ''}"></i>`).join('')}</div>`}
+      <p class="muted" style="margin:6px 0">${esc(EXPL[d.statut] || '')}</p>
+      <div class="r2"><span class="muted">${d.prix_confirme ? 'Prix confirmé' : 'Prix indicatif'}</span><b>${prix(d.prix_gnf)}</b></div>
+      ${d.billet_ref ? `<div class="r2"><span class="muted">Référence billet</span><b>${esc(d.billet_ref)}</b></div>` : ''}
+      <div data-pay-box>${Paiement.html({ ...d, telephone: tel }, INFOS)}</div>
+      <button class="oubli" type="button" data-oubli="${esc(d.reference)}">Ne plus afficher cette demande sur cet appareil</button></div>`;
+  }).join('');
+  DEM.forEach(d => {
+    const tel = (l.find(x => x.reference === d.reference) || {}).telephone || '';
+    const carte = $('#liste').querySelector(`[data-ref="${CSS.escape(d.reference)}"] [data-pay-box]`);
+    Paiement.brancher(carte, { ...d, telephone: tel }, { api, toast, apres: charger, ouvrir: url => { window.location.href = url; } });
+  });
+  $('#liste').querySelectorAll('[data-oubli]').forEach(b => b.onclick = () => { memo.oublier(b.dataset.oubli); DEM = DEM.filter(d => d.reference !== b.dataset.oubli); afficher(); });
+}
+
+async function charger(){
+  const l = memo.lire(); if (!l.length) { DEM = []; afficher(); return; }
+  try {
+    const j = await api('suivi', { demandes: l.map(x => ({ reference: x.reference, telephone: x.telephone })) });
+    DEM = j.demandes || []; if (j.paiement_infos) INFOS = j.paiement_infos;
+    afficher();
+  } catch(e){ toast(e.message); }
+}
+
+$('#fSuivi').addEventListener('submit', async e => {
+  e.preventDefault(); $('#eSuivi').hidden = true;
+  const ref = $('#ref').value.trim().toUpperCase(), tel = $('#tel').value.trim();
+  if (!/^VF-[A-Z0-9]{6}$/.test(ref)) { $('#eSuivi').textContent = 'Indiquez la référence reçue (ex. VF-K7P3QX).'; $('#eSuivi').hidden = false; return; }
+  if (!tel) { $('#eSuivi').textContent = 'Indiquez le numéro WhatsApp utilisé pour la demande.'; $('#eSuivi').hidden = false; return; }
+  $('#bVoir').disabled = true;
+  try {
+    const j = await api('suivi', { demandes: [{ reference: ref, telephone: tel }] });
+    if (!(j.demandes || []).length) { $('#eSuivi').textContent = "Aucune demande avec cette référence et ce numéro. Vérifiez-les, ou écrivez-nous sur WhatsApp."; $('#eSuivi').hidden = false; return; }
+    memo.ajouter(ref, tel); $('#fSuivi').reset(); await charger();
+    $('#liste').scrollIntoView({ behavior: 'smooth' });
+  } catch(err){ $('#eSuivi').textContent = err.message; $('#eSuivi').hidden = false; }
+  finally { $('#bVoir').disabled = false; }
+});
+
+// Retour depuis la page Orange Money, ou lien reçu sur WhatsApp (?ref=VF-XXXXXX)
+const q = new URLSearchParams(location.search);
+const refURL = (q.get('ref') || '').toUpperCase();
+if (q.get('paye')) $('#bandeau').innerHTML = '<div class="info att">⏳ Nous vérifions votre paiement auprès d\'Orange Money. Cela peut prendre quelques secondes.</div>';
+if (q.get('annule')) $('#bandeau').innerHTML = '<div class="info non">Le paiement Orange Money a été annulé. Vous pouvez réessayer ci-dessous.</div>';
+if (refURL && !memo.lire().some(x => x.reference === refURL)) { $('#ref').value = refURL; $('#tel').focus(); }
+charger().then(() => { if (q.get('paye')) setTimeout(charger, 5000); });
+</script>
+</body>
+</html>

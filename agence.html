@@ -51,16 +51,17 @@ dialog::backdrop{background:rgba(8,26,51,.55)}
   <!-- Connexion -->
   <section id="vLogin" class="login" hidden>
     <form class="panel" id="fLogin">
-      <h1 style="font-size:22px;margin-bottom:12px">Connexion agence</h1>
-      <label for="em">E-mail</label><input id="em" type="email" autocomplete="username" required>
-      <label for="pw" style="margin-top:10px">Mot de passe</label><input id="pw" type="password" autocomplete="current-password" required minlength="8">
-      <button class="btn btn-navy w100" style="margin-top:14px" type="submit">Se connecter</button>
-      <button class="btn btn-ghost w100" style="margin-top:8px" type="button" id="bSignup">Créer le compte de l'agence (première fois)</button>
+      <h1 style="font-size:22px;margin-bottom:12px">Espace administrateur</h1>
+      <p class="muted" style="margin:-6px 0 12px">Connectez-vous avec l'e-mail de l'agence et le mot de passe administrateur.</p>
+      <label for="em">E-mail de l'agence</label><input id="em" type="email" autocomplete="username" required>
+      <label for="pw" style="margin-top:10px">Mot de passe administrateur</label><input id="pw" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" required>
+      <button class="btn btn-navy w100" style="margin-top:14px" type="submit" id="bLogin">Se connecter</button>
       <div class="err" id="eLogin" hidden></div>
+      <p class="muted" style="margin-top:12px;font-size:13px">Mot de passe oublié ? Il se modifie dans les réglages du serveur de l'agence.</p>
     </form>
   </section>
 
-  <section id="vWait" hidden><div class="panel"><b>Compte créé, en attente d'activation.</b><p class="muted" style="margin-top:6px">Pour la sécurité, un compte doit être activé avant de voir les demandes des clients. Identifiant à communiquer : <code id="uid"></code></p></div></section>
+  <section id="vWait" hidden><div class="panel"><b>Accès réservé à l'agence</b><p class="muted" style="margin-top:6px">Ce compte n'a pas accès à l'espace agence. Identifiant : <code id="uid"></code></p><button class="btn btn-ghost" type="button" id="bOutW" style="margin-top:10px">Se déconnecter</button></div></section>
 
   <!-- Demandes -->
   <section id="vDem" hidden>
@@ -74,6 +75,7 @@ dialog::backdrop{background:rgba(8,26,51,.55)}
       <button data-f="actives" aria-pressed="true">À traiter</button>
       <button data-f="nouvelle" aria-pressed="false">Nouvelles</button>
       <button data-f="en_cours" aria-pressed="false">En cours</button>
+      <button data-f="paiement" aria-pressed="false">💰 Paiements à vérifier</button>
       <button data-f="confirmee" aria-pressed="false">Prix confirmé</button>
       <button data-f="billet_envoye" aria-pressed="false">Billet envoyé</button>
       <button data-f="annulee" aria-pressed="false">Annulées</button>
@@ -97,6 +99,13 @@ dialog::backdrop{background:rgba(8,26,51,.55)}
         <div><label for="rVal">Validité d'une recherche (minutes)</label><input id="rVal" type="number" min="10" max="1440" required></div>
         <div><label for="rMar">Marché des prix (code pays)</label><input id="rMar" maxlength="2" required></div>
       </div>
+      <h2 style="font-size:17px;margin:18px 0 4px">Paiement Orange Money</h2>
+      <p class="muted" style="margin-bottom:8px">Affiché au client quand le prix est confirmé, pour qu'il paie avec *144#.</p>
+      <div class="grid">
+        <div><label for="rOmNum">Numéro Orange Money de l'agence</label><input id="rOmNum" type="tel" placeholder="+224 6__ __ __ __"></div>
+        <div><label for="rOmNom">Nom du titulaire du compte</label><input id="rOmNom" maxlength="60" placeholder="ex. VOYAGE FACILE"></div>
+        <div><label for="rOmCode">Code marchand (facultatif)</label><input id="rOmCode" maxlength="20"></div>
+      </div>
       <button class="btn btn-navy w100" style="margin-top:14px" type="submit">Enregistrer</button>
       <p class="muted" id="regMaj" style="margin-top:8px"></p>
     </form>
@@ -114,6 +123,8 @@ dialog::backdrop{background:rgba(8,26,51,.55)}
 <script>
 const C = window.VF_CONFIG;
 const sb = window.supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY);
+const SITE = C.SITE || 'https://amodgroup031-cloud.github.io/Voyage-facile-web';
+let REG = {};
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const gnf = n => (n==null ? '—' : Math.round(n).toLocaleString('fr-FR').replace(/[  ]/g,' ') + ' GNF');
@@ -131,36 +142,48 @@ async function demarrer(){
   if(!session){ vue('vLogin'); return; }
   const { data: ag } = await sb.from('agents').select('user_id').eq('user_id', session.user.id).maybeSingle();
   if(!ag){ $('#uid').textContent = session.user.id; vue('vWait'); return; }
-  vue('vDem'); await charger(); clearInterval(timer); timer = setInterval(charger, 30000);
+  vue('vDem'); chargerRegOM(); await charger(); clearInterval(timer); timer = setInterval(charger, 30000);
 }
+if(!$('#em').value) $('#em').value = C.AGENCE_EMAIL || '';
+// Le compte administrateur est créé par le serveur à partir du mot de passe enregistré par l'agence (comme GUINEE TOURS).
+const variantes = p => { const c = p.charAt(0); return c && c.toLowerCase() !== c.toUpperCase() ? [p, (c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()) + p.slice(1)] : [p]; };
+async function essayer(email, pw){ let error = null; for (const p of variantes(pw)) { ({ error } = await sb.auth.signInWithPassword({ email, password: p })); if (!error || !/invalid login credentials/i.test(error.message)) return error; } return error; }
 $('#fLogin').addEventListener('submit', async e => {
   e.preventDefault(); $('#eLogin').hidden = true;
-  const { error } = await sb.auth.signInWithPassword({ email: $('#em').value.trim(), password: $('#pw').value });
-  if(error){ $('#eLogin').textContent = 'Connexion impossible : e-mail ou mot de passe incorrect.'; $('#eLogin').hidden = false; return; }
-  demarrer();
+  const email = $('#em').value.trim().toLowerCase(), pw = $('#pw').value.trim();
+  const err = m => { $('#eLogin').textContent = m; $('#eLogin').hidden = false; };
+  if(!email || !pw) return err("Indiquez l'e-mail de l'agence et le mot de passe administrateur.");
+  $('#bLogin').disabled = true; $('#bLogin').textContent = 'Connexion…';
+  try {
+    let error = await essayer(email, pw);
+    if (error && /invalid login credentials/i.test(error.message) && email === String(C.AGENCE_EMAIL || '').toLowerCase()) {
+      const r = await fetch(C.SUPABASE_URL + '/functions/v1/vf-api', { method:'POST', headers:{ 'Content-Type':'application/json', apikey:C.SUPABASE_ANON_KEY, Authorization:'Bearer ' + C.SUPABASE_ANON_KEY }, body: JSON.stringify({ action:'admin' }) }).catch(() => null);
+      const s2 = r && r.ok ? await r.json().catch(() => null) : null;
+      if (s2 && s2.pret === false) return err("L'espace agence n'est pas encore configuré : le mot de passe administrateur doit d'abord être enregistré sur le serveur.");
+      if (s2 && s2.change) error = await essayer(email, pw);
+    }
+    if (error) return err(/invalid login credentials/i.test(error.message) ? 'Mot de passe incorrect. Cliquez dans la case et vérifiez ce que vous avez tapé.' : /rate limit|too many/i.test(error.message) ? 'Trop de tentatives. Patientez quelques minutes.' : 'Connexion impossible : ' + error.message);
+    $('#pw').value = ''; demarrer();
+  } finally { $('#bLogin').disabled = false; $('#bLogin').textContent = 'Se connecter'; }
 });
-$('#bSignup').onclick = async () => {
-  $('#eLogin').hidden = true;
-  const email = $('#em').value.trim(), password = $('#pw').value;
-  if(!email || password.length < 8){ $('#eLogin').textContent = 'Indiquez un e-mail et un mot de passe d\'au moins 8 caractères.'; $('#eLogin').hidden = false; return; }
-  const { error } = await sb.auth.signUp({ email, password });
-  if(error){ $('#eLogin').textContent = 'Création impossible : ' + error.message; $('#eLogin').hidden = false; return; }
-  toast('Compte créé. Vérifiez votre boîte e-mail si une confirmation est demandée.');
-  demarrer();
-};
+$('#bOutW').onclick = async () => { await sb.auth.signOut(); vue('vLogin'); };
 $('#tOut').onclick = async () => { clearInterval(timer); await sb.auth.signOut(); vue('vLogin'); };
 $('#tDem').onclick = () => { vue('vDem'); charger(); };
 $('#tReg').onclick = () => { vue('vReg'); chargerReglages(); };
 
 /* ---------- Demandes ---------- */
+async function chargerRegOM(){ const { data } = await sb.from('reglages').select('om_numero, om_titulaire, om_code_marchand').eq('id',1).single(); REG = data || {}; }
 async function charger(){
   const { data, error } = await sb.from('demandes').select('*').order('cree', { ascending:false }).limit(300);
   if(error){ toast('Chargement impossible'); return; }
   const avant = new Set(DEM.filter(d=>d.statut==='nouvelle').map(d=>d.id));
+  const payAvant = new Set(DEM.filter(d=>d.paiement_statut==='declare').map(d=>d.id)), premier = DEM.length === 0;
   DEM = data || [];
   if(DEM.some(d => d.statut==='nouvelle' && !avant.has(d.id)) && avant.size) toast('🔔 Nouvelle demande');
+  else if(!premier && DEM.some(d => d.paiement_statut==='declare' && !payAvant.has(d.id))) toast('💰 Un client a déclaré un paiement');
   afficher();
 }
+const payPill = d => ({ declare:'<span class="pill" style="background:#fff4e5;color:#7a4b00">💰 À vérifier</span>', en_cours:'<span class="pill" style="background:#eef4fb;color:#24456f">Paiement en cours</span>', recu:'<span class="pill" style="background:#e3f5ea;color:#165c3d">Payé</span>' }[d.paiement_statut] || '');
 function afficher(){
   const mois = new Date().toISOString().slice(0,7);
   $('#kNew').textContent = DEM.filter(d=>d.statut==='nouvelle').length;
@@ -168,11 +191,11 @@ function afficher(){
   const env = DEM.filter(d=>d.statut==='billet_envoye' && (d.maj||'').slice(0,7)===mois);
   $('#kEnv').textContent = env.length;
   $('#kCom').textContent = gnf(env.reduce((s,d)=> s + (d.prix_final_gnf!=null ? Math.max(0, d.prix_final_gnf - (d.prix_indicatif_gnf - d.commission_gnf)) : d.commission_gnf), 0));
-  const l = DEM.filter(d => filtre==='toutes' || (filtre==='actives' ? ['nouvelle','en_cours','confirmee'].includes(d.statut) : d.statut===filtre));
+  const l = DEM.filter(d => filtre==='toutes' || (filtre==='paiement' ? d.paiement_statut==='declare' : filtre==='actives' ? ['nouvelle','en_cours','confirmee'].includes(d.statut) || d.paiement_statut==='declare' : d.statut===filtre));
   $('#list').innerHTML = l.length ? l.map(d => `<button class="item" type="button" data-id="${esc(d.id)}">
      <div><b>${esc(d.id)}</b> · ${esc(d.trajet)}<div class="muted">${esc(d.passagers.map(p=>p.prenom+' '+p.nom).join(', '))} · ${esc(d.telephone)}</div>
      <div class="muted">${esc(new Date(d.cree).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}))}${d.notif_ok?'':' · ⚠️ alerte WhatsApp non envoyée'}</div></div>
-     <div style="text-align:right">${pill(d.statut)}<div style="margin-top:6px"><b>${gnf(d.prix_final_gnf ?? d.prix_indicatif_gnf)}</b></div></div></button>`).join('')
+     <div style="text-align:right">${payPill(d)} ${pill(d.statut)}<div style="margin-top:6px"><b>${gnf(d.prix_final_gnf ?? d.prix_indicatif_gnf)}</b></div></div></button>`).join('')
     : '<div class="panel muted">Aucune demande ici pour l\'instant.</div>';
   $('#list').querySelectorAll('.item').forEach(b => b.onclick = () => ouvrir(b.dataset.id));
 }
@@ -187,13 +210,14 @@ const waClient = (tel, texte) => 'https://wa.me/' + String(tel).replace(/\D/g,''
 function ouvrir(id){
   const d = DEM.find(x => x.id===id); if(!d) return;
   const o = d.offre;
-  const paxTxt = d.passagers.map((p,k)=>`${k+1}. ${p.nom} ${p.prenom}${p.naissance?' (né(e) le '+p.naissance+')':''}`).join('\n');
+  const paxTxt = d.passagers.map((p,k)=>`${k+1}. ${({ m:'M. ', f:'Mme ', mlle:'Mlle ' }[p.civilite] || '')}${p.nom} ${p.prenom}${p.naissance?' (né(e) le '+p.naissance+')':''}`).join('\n');
   $('#dTitle').textContent = d.id + ' · ' + d.trajet;
   $('#dBody').innerHTML = `
    <div class="box">${leg(o.aller,'Aller')}${o.retour?'<hr style="border:0;border-top:1px solid #d5e1ef;margin:8px 0">'+leg(o.retour,'Retour'):''}</div>
    <div class="box"><b>Passagers</b><pre style="white-space:pre-wrap;font:inherit;margin-top:4px">${esc(paxTxt)}</pre><button class="btn btn-ghost" type="button" id="cpPax">Copier les passagers</button></div>
    <div class="box"><div class="row"><span>Client WhatsApp</span><b>${esc(d.telephone)}</b></div>${d.email?`<div class="row"><span>E-mail</span><span>${esc(d.email)}</span></div>`:''}${d.message_client?`<div style="margin-top:6px">💬 ${esc(d.message_client)}</div>`:''}</div>
-   <div class="box"><div class="row"><span>Prix affiché au client</span><b>${gnf(d.prix_indicatif_gnf)}</b></div><div class="row"><span>dont commission</span><span>${gnf(d.commission_gnf)}</span></div><div class="row"><span>Prix trouvé</span><span>${o.prix_source ? esc(o.prix_source.montant+' '+o.prix_source.devise) : '—'}</span></div></div>
+   <div class="box"><div class="row"><span>Prix affiché au client</span><b>${gnf(d.prix_indicatif_gnf)}</b></div>${d.devise_client && d.devise_client !== 'GNF' && d.prix_client ? `<div class="row"><span>Vu par le client</span><span>${esc(Number(d.prix_client).toLocaleString('fr-FR') + ' ' + d.devise_client)}</span></div>` : ''}<div class="row"><span>dont commission</span><span>${gnf(d.commission_gnf)}</span></div><div class="row"><span>Prix trouvé</span><span>${o.prix_source ? esc(o.prix_source.montant+' '+o.prix_source.devise) : '—'}</span></div></div>
+   <div class="box" id="payBox">${boitePaiement(d)}</div>
    <div class="grid">
      <div><label for="xSt">Statut</label><select id="xSt">${Object.entries(LIB).map(([k,v])=>`<option value="${k}"${k===d.statut?' selected':''}>${v}</option>`).join('')}</select></div>
      <div><label for="xPf">Prix final au client (GNF)</label><input id="xPf" type="number" min="0" step="5000" value="${d.prix_final_gnf ?? ''}" placeholder="${d.prix_indicatif_gnf}"></div>
@@ -202,17 +226,29 @@ function ouvrir(id){
    <div><label for="xNo">Notes internes</label><textarea id="xNo" rows="2" maxlength="1000">${esc(d.notes ?? '')}</textarea></div>
    <button class="btn btn-navy" type="button" id="xSave">Enregistrer</button>
    <div class="acts">
-     <a class="btn btn-wa" target="_blank" rel="noopener" id="waPrix">WhatsApp : prix confirmé</a>
+     <button class="btn btn-wa" type="button" id="waPrix">WhatsApp : prix confirmé</button>
      <a class="btn btn-wa" target="_blank" rel="noopener" id="waBillet">WhatsApp : billet prêt</a>
      <a class="btn btn-ghost" href="tel:${esc(d.telephone)}">Appeler</a>
    </div>
    <p class="muted">Joignez le billet (PDF) dans la conversation WhatsApp qui s'ouvre.</p>`;
   const majLiens = () => {
     const pf = +$('#xPf').value || d.prix_indicatif_gnf, ref = $('#xRef').value.trim();
-    $('#waPrix').href = waClient(d.telephone, `Bonjour, ici VOYAGE FACILE ✈️\nVotre demande ${d.id} (${d.trajet}) : le prix est confirmé avec la compagnie à ${gnf(pf)} pour ${d.passagers.length} passager(s).\n${C.AGENCE_ORANGE_MONEY ? 'Pour bloquer votre place, payez par Orange Money au ' + C.AGENCE_ORANGE_MONEY + ' ou en agence, puis envoyez-nous la confirmation du paiement.' : 'Pour bloquer votre place, votre conseiller vous indique comment payer (Orange Money ou en agence).'}\nAttention : nous ne vous demanderons jamais votre code secret.`);
     $('#waBillet').href = waClient(d.telephone, `Bonjour, ici VOYAGE FACILE ✈️\nVotre billet est prêt ! Référence de réservation : ${ref || '…'}\nTrajet : ${d.trajet}\nVous trouverez le billet électronique ci-joint. Bon voyage, et merci de votre confiance. Partez sans souci !`);
   };
   majLiens(); $('#xPf').oninput = majLiens; $('#xRef').oninput = majLiens;
+  $('#waPrix').onclick = async () => {
+    const pf = +$('#xPf').value || d.prix_indicatif_gnf;
+    const w = window.open('', '_blank');   // ouverte tout de suite (sinon le navigateur la bloque)
+    if (['nouvelle','en_cours','confirmee'].includes(d.statut) && (d.statut !== 'confirmee' || d.prix_final_gnf !== pf)) {
+      const maj = { statut: 'confirmee', prix_final_gnf: pf, maj: new Date().toISOString() };
+      const { error } = await sb.from('demandes').update(maj).eq('id', d.id);
+      if (error) { if (w) w.close(); toast('Enregistrement du prix impossible'); return; }
+      Object.assign(d, maj); $('#xSt').value = 'confirmee'; afficher(); toast('Prix confirmé enregistré');
+    }
+    const url = waClient(d.telephone, messagePrix(d, pf));
+    if (w) w.location.href = url; else window.location.href = url;
+  };
+  brancherPaiement(d);
   $('#cpPax').onclick = async () => { try { await navigator.clipboard.writeText(paxTxt); toast('Passagers copiés'); } catch(e){ toast('Copie impossible'); } };
   $('#xSave').onclick = async () => {
     const maj = { statut: $('#xSt').value, prix_final_gnf: $('#xPf').value ? Math.round(+$('#xPf').value) : null, billet_ref: $('#xRef').value.trim() || null, notes: $('#xNo').value.trim() || null, maj: new Date().toISOString() };
@@ -224,6 +260,43 @@ function ouvrir(id){
 }
 $('#dClose').onclick = () => $('#dlg').close();
 
+/* ---------- Paiement Orange Money ---------- */
+function messagePrix(d, montant){
+  const om = REG.om_code_marchand ? `Payez par Orange Money : composez *144*6#, code marchand ${REG.om_code_marchand}, montant ${gnf(montant)}.`
+    : REG.om_numero ? `Payez par Orange Money : composez *144#, « Transfert d'argent », envoyez ${gnf(montant)} au ${REG.om_numero}${REG.om_titulaire ? ' (' + REG.om_titulaire + ')' : ''}.` : '';
+  const lien = `${SITE}/suivi.html?ref=${encodeURIComponent(d.id)}`;
+  return `Bonjour, ici VOYAGE FACILE ✈️\nVotre demande ${d.id} (${d.trajet}) : le prix est confirmé avec la compagnie à ${gnf(montant)} pour ${d.passagers.length} passager(s).\n`
+    + (om ? `${om}\nEnsuite, envoyez la référence reçue par SMS dans l'application (Mes voyages) ou sur cette page : ${lien}\n` : `Pour payer (Orange Money ou en agence), suivez cette page : ${lien}\n`)
+    + `Vous pouvez aussi payer en agence.\nAttention : nous ne vous demanderons jamais votre code secret.`;
+}
+const LIBP = { aucun:'Pas encore payé', declare:'Déclaré par le client : à vérifier', en_cours:'Paiement en ligne en cours', recu:'Reçu', refuse:'Référence refusée (le client doit la corriger)' };
+function boitePaiement(d){
+  const p = d.paiement_statut || 'aucun';
+  let h = `<b>Paiement</b><div class="row"><span>État</span><b>${esc(LIBP[p] || p)}</b></div>`;
+  if (d.paiement_montant_gnf) h += `<div class="row"><span>Montant attendu</span><b>${gnf(d.paiement_montant_gnf)}</b></div>`;
+  if (d.paiement_mode) h += `<div class="row"><span>Moyen</span><span>${esc({ orange_money:'Orange Money (*144#)', orange_money_web:'Orange Money en ligne', agence:'En agence' }[d.paiement_mode] || d.paiement_mode)}</span></div>`;
+  if (d.paiement_ref) h += `<div class="row"><span>Référence(s)</span><b style="word-break:break-all">${esc(d.paiement_ref)}</b></div>`;
+  if (d.paiement_tel) h += `<div class="row"><span>Payé depuis</span><span>${esc(d.paiement_tel)}</span></div>`;
+  if (d.paiement_maj) h += `<div class="row"><span>Le</span><span>${esc(new Date(d.paiement_maj).toLocaleString('fr-FR'))}</span></div>`;
+  if (p === 'declare' || p === 'en_cours') h += `<p class="muted" style="margin:6px 0">Vérifiez sur le compte Orange Money de l'agence que le montant est arrivé avec cette référence.</p><div class="acts"><button class="btn btn-navy" type="button" data-pay-a="recu">✅ Paiement reçu</button><button class="btn btn-ghost" type="button" data-pay-a="refuse">❌ Référence introuvable</button></div>`;
+  else if (p === 'aucun' || p === 'refuse') h += `<div class="acts" style="margin-top:6px"><button class="btn btn-ghost" type="button" data-pay-a="agence">Paiement reçu en agence</button></div>`;
+  if (p === 'recu') h += `<div class="acts" style="margin-top:6px"><a class="btn btn-wa" target="_blank" rel="noopener" href="${waClient(d.telephone, `Bonjour, ici VOYAGE FACILE.\nNous avons bien reçu votre paiement de ${gnf(d.paiement_montant_gnf || d.prix_final_gnf || d.prix_indicatif_gnf)} pour la demande ${d.id}. Merci ! Votre billet est en préparation.`)}">WhatsApp au client : paiement reçu</a></div>`;
+  if (p === 'refuse') h += `<div class="acts" style="margin-top:6px"><a class="btn btn-wa" target="_blank" rel="noopener" href="${waClient(d.telephone, `Bonjour, ici VOYAGE FACILE.\nNous ne retrouvons pas le paiement avec la référence ${d.paiement_ref || ''} pour la demande ${d.id}. Pouvez-vous vérifier le SMS d'Orange Money et nous renvoyer la bonne référence (ou une capture du SMS) ? Merci.`)}">WhatsApp au client : référence introuvable</a></div>`;
+  return h;
+}
+function brancherPaiement(d){
+  $('#payBox').querySelectorAll('[data-pay-a]').forEach(b => b.onclick = async () => {
+    const a = b.dataset.payA;
+    if (a === 'recu' && !confirm(`Confirmez-vous avoir reçu ${gnf(d.paiement_montant_gnf || d.prix_final_gnf || 0)} sur le compte Orange Money de l'agence ?`)) return;
+    if (a === 'agence' && !confirm('Confirmez-vous que le client a payé en agence ?')) return;
+    const maj = { paiement_statut: a === 'refuse' ? 'refuse' : 'recu', paiement_maj: new Date().toISOString(), ...(a === 'agence' ? { paiement_mode: 'agence' } : {}) };
+    const { error } = await sb.from('demandes').update(maj).eq('id', d.id);
+    if (error) { toast('Enregistrement impossible'); return; }
+    Object.assign(d, maj); $('#payBox').innerHTML = boitePaiement(d); brancherPaiement(d); afficher();
+    toast(maj.paiement_statut === 'recu' ? 'Paiement validé' : 'Le client verra que la référence est à corriger');
+  });
+}
+
 /* ---------- Réglages ---------- */
 async function chargerReglages(){
   const { data, error } = await sb.from('reglages').select('*').eq('id',1).single();
@@ -231,14 +304,20 @@ async function chargerReglages(){
   $('#rUSD').value = data.taux?.USD ?? ''; $('#rEUR').value = data.taux?.EUR ?? '';
   $('#rPct').value = data.commission_pct; $('#rMin').value = data.commission_min; $('#rArr').value = data.arrondi;
   $('#rVal').value = data.duree_validite_min; $('#rMar').value = data.marche;
+  $('#rOmNum').value = data.om_numero || ''; $('#rOmNom').value = data.om_titulaire || ''; $('#rOmCode').value = data.om_code_marchand || '';
   $('#regMaj').textContent = 'Dernière mise à jour : ' + new Date(data.maj).toLocaleString('fr-FR');
 }
 $('#fReg').addEventListener('submit', async e => {
   e.preventDefault();
   const maj = { taux: { USD: +$('#rUSD').value, EUR: +$('#rEUR').value }, commission_pct: +$('#rPct').value, commission_min: Math.round(+$('#rMin').value),
     arrondi: Math.max(1, Math.round(+$('#rArr').value)), duree_validite_min: Math.round(+$('#rVal').value), marche: $('#rMar').value.trim().toUpperCase(), maj: new Date().toISOString() };
+  let omNum = $('#rOmNum').value.replace(/[\s.()-]/g, ''); if (/^6\d{8}$/.test(omNum)) omNum = '+224' + omNum; if (/^00\d+$/.test(omNum)) omNum = '+' + omNum.slice(2);
+  if (omNum && !/^\+\d{8,15}$/.test(omNum)) { toast('Numéro Orange Money invalide (ex. +224 620 00 00 00).'); return; }
+  const omCode = $('#rOmCode').value.trim().toUpperCase(); if (omCode && !/^[A-Z0-9]{3,20}$/.test(omCode)) { toast('Code marchand invalide.'); return; }
+  Object.assign(maj, { om_numero: omNum || null, om_titulaire: $('#rOmNom').value.trim().slice(0,60) || null, om_code_marchand: omCode || null });
   const { error } = await sb.from('reglages').update(maj).eq('id',1);
   if(error){ toast('Enregistrement impossible : ' + error.message); return; }
+  REG = { om_numero: maj.om_numero, om_titulaire: maj.om_titulaire, om_code_marchand: maj.om_code_marchand };
   toast('Réglages enregistrés'); chargerReglages();
 });
 

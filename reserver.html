@@ -43,6 +43,12 @@
 .fbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:8px 0 4px}
 .fbar button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer;min-height:38px}
 .fbar button[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.px-gnf{display:block;font-size:12px;font-weight:500;color:var(--muted);line-height:1.2}
+.devise-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;background:var(--sky);border-radius:12px;padding:8px 12px;margin:0 0 10px;font-size:14px}
+.devise-bar select{width:auto;min-height:38px;padding:6px 10px}
+.civ{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 6px}
+.civ label{display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:15px;color:var(--ink);background:var(--sky);padding:8px 12px;border-radius:999px;cursor:pointer;margin:0;min-height:42px}
+.civ input{width:auto;min-height:0}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -60,7 +66,7 @@
   <!-- 1. RECHERCHE -->
   <section id="vSearch">
     <h1>Trouvez votre billet d'avion</h1>
-    <p class="sub">Prix réels du jour, en GNF, commission de l'agence comprise.</p>
+    <p class="sub">Prix réels du jour, dans votre monnaie, commission de l'agence comprise.</p>
     <form class="panel search" id="fSearch" novalidate>
       <div class="trip" role="radiogroup" aria-label="Type de voyage">
         <label><input type="radio" name="trip" value="ar" checked> Aller-retour</label>
@@ -109,8 +115,9 @@
     <div class="panel">
       <div class="ok"><b>✅ Demande envoyée !</b><br>Référence : <b id="ref"></b></div>
       <p style="margin:14px 0 6px">Un conseiller VOYAGE FACILE vérifie le prix et les places avec la compagnie, puis vous écrit sur WhatsApp au <b id="telDone"></b>.</p>
-      <p class="muted">Ne payez rien avant d'avoir reçu la confirmation de votre conseiller. Nous ne vous demanderons jamais votre code secret Orange Money.</p>
+      <p class="muted">Ne payez rien avant la confirmation du prix par votre conseiller. Ensuite, vous pourrez payer par Orange Money depuis la page « Suivre et payer ma demande ». Nous ne vous demanderons jamais votre code secret Orange Money.</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+        <a class="btn btn-or" id="suiviDone" href="suivi.html">Suivre et payer ma demande</a>
         <a class="btn btn-wa" id="waDone" href="#">Écrire à l'agence sur WhatsApp</a>
         <button class="btn btn-ghost" type="button" id="bNew">Nouvelle recherche</button>
       </div>
@@ -120,12 +127,15 @@
 <div class="toast" id="toast"></div>
 
 <script src="config.js"></script>
+<script src="devise.js"></script>
 <script>
 const C = window.VF_CONFIG;
 const API = C.SUPABASE_URL + "/functions/v1/vf-api";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const gnf = n => Math.round(n).toLocaleString('fr-FR').replace(/[  ]/g,' ') + ' GNF';
+const gnf = n => Math.round(n).toLocaleString('fr-FR').replace(/[\u00a0\u202f]/g,' ') + ' GNF';
+const prix = n => window.Devise ? Devise.html(n) : gnf(n);
+const barreDevise = () => window.Devise ? `<div class="devise-bar"><span>Prix affichés en</span><select id="devSel" aria-label="Monnaie">${Devise.liste().map(d => `<option value="${d.code}"${d.code === Devise.code() ? ' selected' : ''}>${esc(d.nom)} (${d.code})</option>`).join('')}</select></div>` : '';
 const waLink = t => 'https://wa.me/' + C.AGENCE_WHATSAPP + '?text=' + encodeURIComponent(t);
 let RECH = null, CHOIX = null, PARAMS = null;
 
@@ -133,7 +143,7 @@ $('#waTop').href = waLink("Bonjour VOYAGE FACILE, j'ai une question sur un bille
 
 async function api(action, data){
   const r = await fetch(API, { method:'POST', headers:{ 'Content-Type':'application/json', 'apikey':C.SUPABASE_ANON_KEY, 'Authorization':'Bearer ' + C.SUPABASE_ANON_KEY },
-    body: JSON.stringify({ action, ...data }) });
+    body: JSON.stringify({ action, devise: window.Devise ? Devise.code() : 'GNF', ...data }) });
   let j = {}; try { j = await r.json(); } catch(e){}
   if(!r.ok) throw new Error(j.erreur || "Le service ne répond pas. Réessayez ou écrivez-nous sur WhatsApp.");
   return j;
@@ -231,13 +241,14 @@ function renderOffres(){
   const barre = `<div class="fbar" id="triBar">${chip('tri','prix','💰 Moins cher')}${chip('tri','duree','⚡ Plus rapide')}${chip('tri','heure','🕗 Départ tôt')}${chip('f','direct','Direct uniquement')}${chip('f','soute','Bagage en soute')}
     ${comps.length > 1 ? `<select id="compSel" aria-label="Compagnie" style="width:auto;min-height:38px;padding:6px 10px"><option value="">Toutes les compagnies (${comps.length})</option>${comps.map(c => `<option${c===FILTRE.compagnie?' selected':''}>${esc(c)}</option>`).join('')}</select>` : ''}</div>`;
   const badge = o => [o.total_gnf === moinsCher ? '<span class="pill" style="background:#e3f5ea;color:#165c3d">Le moins cher</span>' : '', dureeTot(o) === plusRapide ? '<span class="pill" style="background:#eef4fb;color:#24456f">Le plus rapide</span>' : '', estDirect(o) ? '<span class="pill" style="background:#efe9fb;color:#4b2f86">Direct</span>' : ''].join(' ');
-  $('#results').innerHTML = `<p class="muted">${l.length} vol(s) sur ${toutes.length} · prix pour ${p.adultes + p.enfants} passager(s), commission comprise. Prix indicatif, confirmé par votre conseiller avant paiement.</p>` + barre +
+  $('#results').innerHTML = barreDevise() + `<p class="muted">${l.length} vol(s) sur ${toutes.length} · prix pour ${p.adultes + p.enfants} passager(s), commission comprise. Prix indicatif, confirmé par votre conseiller avant paiement.</p>` + barre +
     (l.length ? l.map(o => `<article class="offer"><div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px">${badge(o)}</div>${legHTML(o.aller,'Aller')}${legHTML(o.retour,'Retour')}${bagages(o)}</div>
-      <div class="price"><div><b>${gnf(o.total_gnf)}</b><span class="muted">total</span></div><button class="btn btn-or" type="button" data-i="${o.i}">Choisir ce vol</button></div></article>`).join('')
+      <div class="price"><div><b>${prix(o.total_gnf)}</b><span class="muted">total</span></div><button class="btn btn-or" type="button" data-i="${o.i}">Choisir ce vol</button></div></article>`).join('')
      : `<div class="panel">Aucun vol avec ces critères. <button class="btn btn-ghost" type="button" id="resetF">Voir tous les vols</button></div>`);
   $('#results').querySelectorAll('button[data-i]').forEach(b => b.onclick = () => choisir(+b.dataset.i));
   $('#triBar').querySelectorAll('[data-tri]').forEach(b => b.onclick = () => { FILTRE.tri = b.dataset.tri; renderOffres(); });
   $('#triBar').querySelectorAll('[data-f]').forEach(b => b.onclick = () => { FILTRE[b.dataset.f] = !FILTRE[b.dataset.f]; renderOffres(); });
+  if ($('#devSel')) $('#devSel').onchange = e => Devise.choisir(e.target.value);
   if ($('#compSel')) $('#compSel').onchange = e => { FILTRE.compagnie = e.target.value; renderOffres(); };
   if ($('#resetF')) $('#resetF').onclick = () => { FILTRE = { tri: FILTRE.tri, direct:false, compagnie:'', soute:false }; renderOffres(); };
 }
@@ -248,13 +259,15 @@ function choisir(i){
   const n = PARAMS.adultes + PARAMS.enfants; let h = '';
   for(let k=0;k<n;k++){
     const enfant = k >= PARAMS.adultes;
-    h += `<div class="pax"><h4>Passager ${k+1}${enfant?' (enfant)':''}</h4><div class="grid">
+    const civs = enfant ? [['m','Garçon'],['f','Fille']] : [['m','Monsieur'],['f','Madame'],['mlle','Mademoiselle']];
+    h += `<div class="pax"><h4>Passager ${k+1}${enfant?' (enfant)':''}</h4>
+      <div class="civ" role="radiogroup" aria-label="Civilité du passager ${k+1}">${civs.map(([v,t]) => `<label><input type="radio" name="civ${k}" value="${v}"> ${t}</label>`).join('')}</div><div class="grid">
       <div><label for="pp${k}">Prénom(s)</label><input id="pp${k}" autocomplete="given-name" required></div>
       <div><label for="pn${k}">Nom</label><input id="pn${k}" autocomplete="family-name" required></div>
       <div><label for="pd${k}">Date de naissance${enfant?'':' (facultatif)'}</label><input id="pd${k}" type="date" max="${today}"${enfant?' required':''}></div></div></div>`;
   }
   $('#paxList').innerHTML = h;
-  $('#recap').innerHTML = `${legHTML(CHOIX.aller,'Aller')}${legHTML(CHOIX.retour,'Retour')}<div style="margin-top:6px"><b>Total indicatif : ${gnf(CHOIX.total_gnf)}</b> <span class="muted">(${n} passager(s), commission comprise)</span></div>`;
+  $('#recap').innerHTML = `${legHTML(CHOIX.aller,'Aller')}${legHTML(CHOIX.retour,'Retour')}<div style="margin-top:6px"><b>Total indicatif : ${prix(CHOIX.total_gnf)}</b> <span class="muted">(${n} passager(s), commission comprise)</span></div>`;
   $('#ePax').hidden = true; show('vPax'); etape(3);
 }
 $('#bBack').onclick = () => { show('vSearch'); etape(2); };
@@ -264,9 +277,11 @@ $('#fPax').addEventListener('submit', async e => {
   const n = PARAMS.adultes + PARAMS.enfants, passagers = [];
   for(let k=0;k<n;k++){
     const prenom = $('#pp'+k).value.trim(), nom = $('#pn'+k).value.trim(), naissance = $('#pd'+k).value || null;
+    const civ = document.querySelector(`input[name=civ${k}]:checked`);
+    if(!civ){ return fail(`Passager ${k+1} : choisissez ${k >= PARAMS.adultes ? 'garçon ou fille' : 'Monsieur, Madame ou Mademoiselle'}.`); }
     if(!prenom || !nom){ return fail(`Passager ${k+1} : indiquez le prénom et le nom.`); }
     if(k >= PARAMS.adultes && !naissance){ return fail(`Passager ${k+1} : la date de naissance de l'enfant est nécessaire.`); }
-    passagers.push({ prenom, nom, naissance });
+    passagers.push({ civilite: civ.value, prenom, nom, naissance });
   }
   if(!$('#tel').value.trim()) return fail('Indiquez votre numéro WhatsApp.');
   if(!$('#ok').checked) return fail('Cochez la case pour confirmer votre demande.');
@@ -275,6 +290,8 @@ $('#fPax').addEventListener('submit', async e => {
     const j = await api('demande', { recherche_id: RECH.recherche_id, offre: CHOIX.i, passagers, telephone: $('#tel').value, email: $('#mail').value || null, message: $('#msg').value || null, accord: true });
     $('#ref').textContent = j.reference; $('#telDone').textContent = $('#tel').value;
     $('#waDone').href = waLink(`Bonjour VOYAGE FACILE, je viens d'envoyer la demande ${j.reference} (${PARAMS.origine} → ${PARAMS.destination}, ${gnf(j.total_gnf)}).`);
+    try { const l = JSON.parse(localStorage.getItem('vf_web_demandes') || '[]').filter(x => x.reference !== j.reference); l.unshift({ reference: j.reference, telephone: $('#tel').value.trim() }); localStorage.setItem('vf_web_demandes', JSON.stringify(l.slice(0, 20))); } catch(e){}
+    $('#suiviDone').href = 'suivi.html?ref=' + encodeURIComponent(j.reference);
     show('vDone'); etape(4);
   } catch(err){ fail(err.message); }
   finally { $('#bSend').disabled = false; $('#bSend').textContent = 'Envoyer ma demande'; }

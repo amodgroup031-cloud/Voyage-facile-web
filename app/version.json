@@ -1,11 +1,12 @@
 {
-  "web": "2026.11.26.5",
+  "web": "2026.11.27.1",
   "notes": [
-    "Espace agence : connexion directe avec l'e-mail de l'agence et le mot de passe administrateur, comme GUINEE TOURS",
-    "Connexion plus tolérante aux fautes du clavier (majuscule automatique, espace en trop)"
+    "Paiement Orange Money : dès que le prix est confirmé, payez avec *144# et envoyez la référence depuis « Mes voyages »",
+    "Espace agence : vérification des paiements en un geste et numéro Orange Money dans les Réglages",
+    "Message « prix confirmé » avec les instructions de paiement et le lien de suivi"
   ],
-  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.26.5.zip",
-  "checksum": "7c57795e6584a07e1d82b807069658a5ded126fa70ef8689ced7d82caa52682c",
+  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.27.1.zip",
+  "checksum": "a41cb362e4d3e6a4c706cdbbcd3690c395cd211269bba95bc1d43e2bf99cd2ba",
   "native_min": 18,
   "apk": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/Voyage-Facile.apk",
   "apk_version": "1.0.18"
