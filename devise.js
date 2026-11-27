@@ -12,6 +12,14 @@
     EGP:'Livre égyptienne', NGN:'Naira', GHS:'Cedi', SLE:'Leone', LRD:'Dollar libérien', GMD:'Dalasi', MRU:'Ouguiya', CVE:'Escudo cap-verdien',
     AED:'Dirham des Émirats', SAR:'Riyal saoudien', QAR:'Riyal qatari', TRY:'Livre turque', CNY:'Yuan', INR:'Roupie indienne', RUB:'Rouble'
   };
+  const NOMS_EN = {
+    GNF:'Guinean franc', XOF:'CFA franc (West Africa)', XAF:'CFA franc (Central Africa)', EUR:'Euro', USD:'US dollar', GBP:'Pound sterling',
+    CAD:'Canadian dollar', CHF:'Swiss franc', MAD:'Moroccan dirham', DZD:'Algerian dinar', TND:'Tunisian dinar', EGP:'Egyptian pound', NGN:'Naira',
+    GHS:'Cedi', SLE:'Leone', LRD:'Liberian dollar', GMD:'Dalasi', MRU:'Ouguiya', CVE:'Cape Verdean escudo', AED:'UAE dirham', SAR:'Saudi riyal',
+    QAR:'Qatari riyal', TRY:'Turkish lira', CNY:'Yuan', INR:'Indian rupee', RUB:'Ruble'
+  };
+  const EN = () => !!(window.L && window.L.code === 'en');
+  const LOC = () => (window.L && window.L.loc) || 'fr-FR';
   const SANS_DECIMALES = new Set(['GNF','XOF','XAF','NGN','SLE','LRD','GMD','MRU','CVE','DZD','INR','RUB','EGP']);
   const FUSEAUX = {
     'Africa/Conakry':'GNF', 'Africa/Dakar':'XOF', 'Africa/Abidjan':'XOF', 'Africa/Bamako':'XOF', 'Africa/Ouagadougou':'XOF', 'Africa/Niamey':'XOF',
@@ -46,7 +54,7 @@
   let cache = lire('vf-taux', null);            // { taux: {EUR: 9450, …}, t: horodatage }
   const ecouteurs = [];
 
-  const gnfTxt = n => Math.round(n).toLocaleString('fr-FR').replace(/[  ]/g, ' ') + ' GNF';
+  const gnfTxt = n => Math.round(n).toLocaleString(LOC()).replace(/[  ]/g, ' ') + ' GNF';
   function montant(n){
     if (n == null || !isFinite(n)) return null;
     if (code === 'GNF') return Math.round(n);
@@ -56,8 +64,8 @@
     return SANS_DECIMALES.has(code) ? Math.ceil(v / 100) * 100 : Math.ceil(v);
   }
   function format(v){
-    try { return new Intl.NumberFormat('fr-FR', { style:'currency', currency: code, maximumFractionDigits:0, minimumFractionDigits:0 }).format(v).replace(/[  ]/g, ' '); }
-    catch(e){ return Math.round(v).toLocaleString('fr-FR').replace(/[  ]/g, ' ') + ' ' + code; }
+    try { return new Intl.NumberFormat(LOC(), { style:'currency', currency: code, maximumFractionDigits:0, minimumFractionDigits:0 }).format(v).replace(/[  ]/g, ' '); }
+    catch(e){ return Math.round(v).toLocaleString(LOC()).replace(/[  ]/g, ' ') + ' ' + code; }
   }
   // Texte principal : dans la monnaie du client (ou en GNF si le taux n'est pas encore connu).
   function prix(n){
@@ -66,7 +74,7 @@
     return code === 'GNF' || v == null ? gnfTxt(n) : format(v);
   }
   // Rappel en GNF sous le prix (seulement si la monnaie n'est pas le GNF).
-  const rappel = n => (code !== 'GNF' && montant(n) != null && n != null) ? 'soit ' + gnfTxt(n) : '';
+  const rappel = n => (code !== 'GNF' && montant(n) != null && n != null) ? (EN() ? 'i.e. ' : 'soit ') + gnfTxt(n) : '';
   const escA = s => String(s).replace(/"/g, '&quot;');
   // HTML qui se met à jour tout seul quand la monnaie ou les taux changent.
   const html = (n, avecRappel = true) => `<span data-gnf="${escA(n ?? '')}" data-r="${avecRappel ? 1 : 0}">${prix(n)}${avecRappel && rappel(n) ? `<small class="px-gnf">${rappel(n)}</small>` : ''}</span>`;
@@ -92,8 +100,8 @@
 
   window.Devise = {
     code: () => code,
-    nom: c => NOMS[c || code] || c,
-    liste: () => Object.keys(NOMS).map(c => ({ code: c, nom: NOMS[c] })),
+    nom: c => (EN() ? NOMS_EN : NOMS)[c || code] || c,
+    liste: () => Object.keys(NOMS).map(c => ({ code: c, nom: (EN() ? NOMS_EN : NOMS)[c] })),
     choisir(c){ if (!NOMS[c]) return; code = c; ecrire('vf-devise', c); repeindre(); chargerTaux(); },
     detecter, prix, rappel, html, repeindre, chargerTaux,
     surChangement: f => ecouteurs.push(f),

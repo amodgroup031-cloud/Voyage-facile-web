@@ -25,15 +25,16 @@
   function style(){ if (styleMis) return; styleMis = true; const s = document.createElement('style'); s.textContent = CSS; document.head.appendChild(s); }
 
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const gnf = n => Math.round(n).toLocaleString('fr-FR').replace(/[  ]/g,' ') + ' GNF';
+  const T = (s, v) => window.L ? L.t(s, v) : (v ? s.replace(/\{(\w+)\}/g, (_, k) => v[k] != null ? v[k] : '') : s);
+  const gnf = n => Math.round(n).toLocaleString((window.L && L.loc) || 'fr-FR').replace(/[  ]/g,' ') + ' GNF';
   const prix = n => (window.Devise && Devise.html) ? Devise.html(n) : gnf(n);
   const telAff = t => { const d = String(t || '').replace(/\D/g, ''); return d.startsWith('224') && d.length === 12 ? '+224 ' + d.slice(3,6) + ' ' + d.slice(6,8) + ' ' + d.slice(8,10) + ' ' + d.slice(10) : String(t || ''); };
 
   // v : voyage tel que renvoyé par « suivi » ; infos : paiement_infos (coordonnées Orange Money de l'agence)
   function html(v, infos){
     const p = v && v.paiement; if (!p) return '';
-    if (p.statut === 'recu') return `<div class="pay"><div class="pay-etat ok">✅ <b>Paiement reçu</b>${p.mode === 'agence' ? ' en agence' : ''}${p.ref ? ' · réf. ' + esc(p.ref) : ''}.<br>${v.statut === 'billet_envoye' ? 'Merci, bon voyage !' : 'Votre billet est en préparation.'}</div></div>`;
-    if (p.statut === 'declare') return `<div class="pay"><div class="pay-etat att">⏳ <b>Paiement déclaré</b> (réf. ${esc(p.ref)}).<br>L'agence vérifie la réception sur son compte Orange Money. Vous serez prévenu sur WhatsApp.</div></div>`;
+    if (p.statut === 'recu') return `<div class="pay"><div class="pay-etat ok">✅ <b>${T('Paiement reçu')}</b>${p.mode === 'agence' ? T(' en agence') : ''}${p.ref ? T(' · réf. {r}', { r: esc(p.ref) }) : ''}.<br>${v.statut === 'billet_envoye' ? T('Merci, bon voyage !') : T('Votre billet est en préparation.')}</div></div>`;
+    if (p.statut === 'declare') return `<div class="pay"><div class="pay-etat att">⏳ <b>${T('Paiement déclaré')}</b> ${T('(réf. {r}).', { r: esc(p.ref) })}<br>${T("L'agence vérifie la réception sur son compte Orange Money. Vous serez prévenu sur WhatsApp.")}</div></div>`;
     if (!v.a_payer) return '';
     const montant = p.montant_gnf || v.prix_gnf;
     const i = infos || {};
@@ -46,15 +47,16 @@
       <div class="pay-note">Page sécurisée d'Orange Money : vous validez avec votre code secret sur votre téléphone.</div>`;
     const guide = i.om_numero || i.om_code_marchand;
     if (guide) {
+      const num = x => `<span class="pay-num">${x}</span>`;
       const etape1 = i.om_code_marchand
-        ? `Composez <span class="pay-num">*144*6#</span> (paiement marchand), entrez le code marchand <span class="pay-num">${esc(i.om_code_marchand)}</span> et le montant <span class="pay-num">${gnf(montant)}</span>.`
-        : `Composez <span class="pay-num">*144#</span>, choisissez « Transfert d'argent » et envoyez <span class="pay-num">${gnf(montant)}</span> au <span class="pay-num">${esc(telAff(i.om_numero))}</span>${i.om_titulaire ? ` (${esc(i.om_titulaire)})` : ''}.`;
+        ? T('Composez {a} (paiement marchand), entrez le code marchand {c} et le montant {m}.', { a: num('*144*6#'), c: num(esc(i.om_code_marchand)), m: num(gnf(montant)) })
+        : T("Composez {a}, choisissez « Transfert d'argent » et envoyez {m} au {n}{t}.", { a: num('*144#'), m: num(gnf(montant)), n: num(esc(telAff(i.om_numero))), t: i.om_titulaire ? ` (${esc(i.om_titulaire)})` : '' });
       h += `<details${enLigne ? '' : ' open'}><summary>${enLigne ? 'Ou payer avec le code *144#' : 'Comment payer'}</summary>
-        <ol><li>${etape1}<a class="pay-btn pay-ghost" href="tel:${i.om_code_marchand ? '*144*6%23' : '*144%23'}">Ouvrir ${i.om_code_marchand ? '*144*6#' : '*144#'} sur le téléphone</a></li>
-        <li>Validez avec <b>votre</b> code secret. Ne le donnez à personne, même pas à l'agence.</li>
+        <ol><li>${etape1}<a class="pay-btn pay-ghost" href="tel:${i.om_code_marchand ? '*144*6%23' : '*144%23'}">${T('Ouvrir {c} sur le téléphone', { c: i.om_code_marchand ? '*144*6#' : '*144#' })}</a></li>
+        <li>${T("Validez avec {v} code secret. Ne le donnez à personne, même pas à l'agence.", { v: '<b>' + T('votre') + '</b>' })}</li>
         <li>Recopiez ici la référence de transaction reçue par SMS d'Orange Money :</li></ol>
         <label for="payRef-${esc(v.reference)}">Référence du SMS Orange Money</label><input id="payRef-${esc(v.reference)}" data-pay-ref autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ex. MP261127.1530.A12345">
-        <label for="payTel-${esc(v.reference)}">Numéro qui a payé (si différent du vôtre)</label><input class="tel" id="payTel-${esc(v.reference)}" data-pay-tel type="tel" inputmode="tel" placeholder="+224 6__ __ __ __">
+        <label for="payTel-${esc(v.reference)}">${v.proche ? 'Votre numéro Orange Money (celui qui a payé)' : 'Numéro qui a payé (si différent du vôtre)'}</label><input class="tel" id="payTel-${esc(v.reference)}" data-pay-tel type="tel" inputmode="tel" placeholder="+224 6__ __ __ __">
         <button class="pay-btn pay-ok-btn" type="button" data-pay="declarer">J'ai payé : envoyer la référence</button>
         <div class="pay-err" data-pay-err hidden></div>
         <div class="pay-note">Montant élevé ? Vous pouvez payer en plusieurs fois : mettez toutes les références, séparées par un espace.</div></details>`;
@@ -68,25 +70,28 @@
   // ctx : { api(action, data) → Promise, ouvrir(url), toast(msg), apres() }
   function brancher(racine, v, ctx){
     if (!racine) return;
+    // Le client s'identifie avec sa référence et son numéro ; un proche avec le lien reçu.
+    const ident = v.lien ? { lien: v.lien } : { reference: v.reference, telephone: v.telephone };
     const err = m => { const e = racine.querySelector('[data-pay-err]'); if (e) { e.textContent = m; e.hidden = !m; } else ctx.toast(m); };
     racine.querySelectorAll('[data-pay]').forEach(b => b.onclick = async () => {
       const act = b.dataset.pay;
       if (act === 'actualiser') { ctx.apres(); return; }
-      const texte = b.textContent; b.disabled = true; b.textContent = 'Un instant…'; err('');
+      const texte = b.textContent; b.disabled = true; b.textContent = T('Un instant…'); err('');
       try {
         if (act === 'om') {
-          const j = await ctx.api('payer_om', { reference: v.reference, telephone: v.telephone });
-          if (j.url) { ctx.toast("Ouverture d'Orange Money…"); ctx.ouvrir(j.url); }
+          const j = await ctx.api('payer_om', ident);
+          if (j.url) { ctx.toast(T("Ouverture d'Orange Money…")); ctx.ouvrir(j.url); }
           setTimeout(ctx.apres, 1500);
         } else if (act === 'declarer') {
           const ref = (racine.querySelector('[data-pay-ref]')?.value || '').trim();
           const tel = (racine.querySelector('[data-pay-tel]')?.value || '').trim();
-          if (!ref) { err("Recopiez la référence reçue par SMS d'Orange Money."); return; }
-          await ctx.api('declarer_paiement', { reference: v.reference, telephone: v.telephone, transaction: ref, tel_payeur: tel || null });
-          ctx.toast("Merci ! L'agence vérifie votre paiement.");
+          if (!ref) { err(T("Recopiez la référence reçue par SMS d'Orange Money.")); return; }
+          if (v.proche && !tel) { err(T("Indiquez votre numéro Orange Money (celui qui a payé).")); return; }
+          await ctx.api('declarer_paiement', { ...ident, transaction: ref, tel_payeur: tel || null });
+          ctx.toast(T("Merci ! L'agence vérifie votre paiement."));
           ctx.apres();
         }
-      } catch(e) { err(e.message || 'Une erreur est survenue. Réessayez.'); }
+      } catch(e) { err(e.message || T('Une erreur est survenue. Réessayez.')); }
       finally { b.disabled = false; b.textContent = texte; }
     });
   }

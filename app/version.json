@@ -1,13 +1,20 @@
 {
-  "web": "2026.11.27.1",
+  "web": "2026.11.27.2",
   "notes": [
-    "Paiement Orange Money : dès que le prix est confirmé, payez avec *144# et envoyez la référence depuis « Mes voyages »",
-    "Espace agence : vérification des paiements en un geste et numéro Orange Money dans les Réglages",
-    "Message « prix confirmé » avec les instructions de paiement et le lien de suivi"
+    "Application en français et en anglais (bouton FR / EN en haut de l'écran)",
+    "Ville de départ et destinations adaptées à votre pays, partout en Afrique et dans le monde",
+    "« Faire payer un proche » : envoyez un lien sur WhatsApp, un parent paie votre billet en toute sécurité",
+    "Compte à rebours avant le départ et liste de préparation dans « Mes voyages »"
   ],
-  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.27.1.zip",
-  "checksum": "a41cb362e4d3e6a4c706cdbbcd3690c395cd211269bba95bc1d43e2bf99cd2ba",
+  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.27.2.zip",
+  "checksum": "284d9cd602d832c943998f2c49ca93c8b8f9ab6de2edaa10ad5e655bc0b762c0",
   "native_min": 18,
   "apk": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/Voyage-Facile.apk",
-  "apk_version": "1.0.18"
+  "apk_version": "1.0.18",
+  "notes_en": [
+    "App in French and English (FR / EN button at the top of the screen)",
+    "Departure city and destinations adapted to your country, across Africa and the world",
+    "“Ask someone to pay”: send a link on WhatsApp and a relative pays for your ticket safely",
+    "Countdown to departure and a travel checklist in “My trips”"
+  ]
 }

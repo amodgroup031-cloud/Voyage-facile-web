@@ -22,6 +22,8 @@
 .st-nouvelle{background:#fff1c2;color:#6b4f00}.st-en_cours{background:#eef4fb;color:#24456f}.st-confirmee{background:#efe9fb;color:#4b2f86}.st-billet_envoye{background:#e3f5ea;color:#165c3d}.st-annulee{background:#fde8e8;color:#8a1f1f}
 .info{border-radius:12px;padding:10px 12px;margin-top:12px;font-size:14px}
 .info.att{background:#fff4e5;color:#7a4b00}.info.non{background:#fde8e8;color:#8a1f1f}
+.lang-top{border:0;cursor:pointer;margin-left:auto;margin-right:-4px;background:rgba(255,255,255,.16)}
+.proche-info{background:#eef4fb;color:#24456f;border-radius:12px;padding:10px 12px;margin-top:10px;font-size:14px}
 .oubli{background:none;border:0;color:var(--muted);text-decoration:underline;font-size:13px;cursor:pointer;margin-top:8px;min-height:36px}
 [hidden]{display:none!important}
 </style>
@@ -30,6 +32,7 @@
 <header class="top">
   <div class="hrow">
     <a class="brand" href="index.html" aria-label="VOYAGE FACILE – accueil"><svg width="40" height="40" viewBox="14 0 112 112" aria-hidden="true"><path d="M56 100 C56 100 22 70 22 45 C22 26 37 11 56 11 C75 11 90 26 90 45 C90 70 56 100 56 100 Z" fill="#ffffff"/><path d="M56 100 C56 100 22 70 22 45 C22 26 37 11 56 11 Z" fill="#dfe8f3"/><path d="M40 46 L52 58 L73 35" fill="none" stroke="#0b2545" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/><path transform="translate(96 18) rotate(-40) scale(1.25)" d="M17 0 C17 -1.5 15.6 -2.5 13 -2.5 L4.6 -2.5 L-4.8 -15.5 L-8.8 -15.5 L-3.4 -2.5 L-10.4 -2.5 L-13.8 -7.6 L-16.4 -7.6 L-14.4 -2 L-15.4 0 L-14.4 2 L-16.4 7.6 L-13.8 7.6 L-10.4 2.5 L-3.4 2.5 L-8.8 15.5 L-4.8 15.5 L4.6 2.5 L13 2.5 C15.6 2.5 17 1.5 17 0 Z" fill="#f28c28"/></svg><span><b>VOYAGE <span>FACILE</span></b><small>PARTEZ SANS SOUCI</small></span></a>
+    <button class="wa-top lang-top" id="langTop" type="button" aria-label="Changer de langue">EN</button>
     <a class="wa-top" id="waTop" href="#">WhatsApp</a>
   </div>
 </header>
@@ -53,6 +56,8 @@
 <div class="toast" id="toast"></div>
 
 <script src="config.js"></script>
+<script src="pays.js"></script>
+<script src="langue.js"></script>
 <script src="devise.js"></script>
 <script src="paiement.js"></script>
 <script>
@@ -60,19 +65,22 @@ const C = window.VF_CONFIG;
 const API = C.SUPABASE_URL + "/functions/v1/vf-api";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const prix = n => window.Devise ? Devise.html(n) : Math.round(n).toLocaleString('fr-FR') + ' GNF';
+const T = (s, v) => window.L ? L.t(s, v) : s;
+const LOC = (window.L && L.loc) || 'fr-FR';
+const prix = n => window.Devise ? Devise.html(n) : Math.round(n).toLocaleString(LOC) + ' GNF';
 const waLink = t => 'https://wa.me/' + C.AGENCE_WHATSAPP + '?text=' + encodeURIComponent(t);
 function toast(t){ const el = $('#toast'); el.textContent = t; el.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => el.style.display = 'none', 3000); }
-$('#waTop').href = waLink("Bonjour VOYAGE FACILE, j'ai une question sur ma demande.");
-$('#waAide').href = waLink("Bonjour VOYAGE FACILE, j'ai besoin d'aide pour suivre ou payer ma demande.");
+$('#waTop').href = waLink(T("Bonjour VOYAGE FACILE, j'ai une question sur ma demande."));
+$('#waAide').href = waLink(T("Bonjour VOYAGE FACILE, j'ai besoin d'aide pour suivre ou payer ma demande."));
+if (window.L) { $('#langTop').textContent = L.autre().toUpperCase(); $('#langTop').onclick = () => L.choisir(L.autre()); } else $('#langTop').hidden = true;
 
 async function api(action, data){
   let r;
   try { r = await fetch(API, { method:'POST', headers:{ 'Content-Type':'application/json', 'apikey':C.SUPABASE_ANON_KEY, 'Authorization':'Bearer ' + C.SUPABASE_ANON_KEY },
-    body: JSON.stringify({ action, devise: window.Devise ? Devise.code() : 'GNF', ...data }) }); }
-  catch(e){ throw new Error("Pas de connexion Internet. Vérifiez votre réseau puis réessayez."); }
+    body: JSON.stringify({ action, devise: window.Devise ? Devise.code() : 'GNF', langue: window.L ? L.code : 'fr', ...data }) }); }
+  catch(e){ throw new Error(T("Pas de connexion Internet. Vérifiez votre réseau puis réessayez.")); }
   let j = {}; try { j = await r.json(); } catch(e){}
-  if(!r.ok) throw new Error(j.erreur || "Le service ne répond pas. Réessayez ou écrivez-nous sur WhatsApp.");
+  if(!r.ok) throw new Error(j.erreur || T("Le service ne répond pas. Réessayez ou écrivez-nous sur WhatsApp."));
   return j;
 }
 const memo = {
@@ -95,18 +103,18 @@ let INFOS = null, DEM = [];
 
 function afficher(){
   const l = memo.lire();
-  if (!DEM.length) { $('#liste').innerHTML = ''; $('#fTitre').textContent = 'Retrouver une demande'; return; }
-  $('#fTitre').textContent = 'Ajouter une autre demande';
+  if (!DEM.length) { $('#liste').innerHTML = ''; $('#fTitre').textContent = T('Retrouver une demande'); return; }
+  $('#fTitre').textContent = T('Ajouter une autre demande');
   $('#liste').innerHTML = DEM.map(d => {
     const tel = (l.find(x => x.reference === d.reference) || {}).telephone || '';
     const e = ETAPES[d.statut] ?? 1;
-    return `<div class="dcard" data-ref="${esc(d.reference)}"><div class="dtop"><div><b>${esc(d.trajet || '')}</b><div class="muted">Réf. ${esc(d.reference)}</div></div><span class="pill st-${esc(d.statut)}">${esc(LIB[d.statut] || d.statut)}</span></div>
+    return `<div class="dcard" data-ref="${esc(d.reference)}"><div class="dtop"><div><b>${esc(d.trajet || '')}</b><div class="muted">${esc(T('Réf. {r}', { r: d.reference }))}</div></div><span class="pill st-${esc(d.statut)}">${esc(T(LIB[d.statut] || d.statut))}</span></div>
       ${d.statut === 'annulee' ? '' : `<div class="steps4">${[1,2,3,4].map(k => `<i class="${k <= e ? 'on' : ''}"></i>`).join('')}</div>`}
-      <p class="muted" style="margin:6px 0">${esc(EXPL[d.statut] || '')}</p>
-      <div class="r2"><span class="muted">${d.prix_confirme ? 'Prix confirmé' : 'Prix indicatif'}</span><b>${prix(d.prix_gnf)}</b></div>
-      ${d.billet_ref ? `<div class="r2"><span class="muted">Référence billet</span><b>${esc(d.billet_ref)}</b></div>` : ''}
+      <p class="muted" style="margin:6px 0">${esc(T(EXPL[d.statut] || ''))}</p>
+      <div class="r2"><span class="muted">${T(d.prix_confirme ? 'Prix confirmé' : 'Prix indicatif')}</span><b>${prix(d.prix_gnf)}</b></div>
+      ${d.billet_ref ? `<div class="r2"><span class="muted">${T('Référence billet')}</span><b>${esc(d.billet_ref)}</b></div>` : ''}
       <div data-pay-box>${Paiement.html({ ...d, telephone: tel }, INFOS)}</div>
-      <button class="oubli" type="button" data-oubli="${esc(d.reference)}">Ne plus afficher cette demande sur cet appareil</button></div>`;
+      <button class="oubli" type="button" data-oubli="${esc(d.reference)}">${T('Ne plus afficher cette demande sur cet appareil')}</button></div>`;
   }).join('');
   DEM.forEach(d => {
     const tel = (l.find(x => x.reference === d.reference) || {}).telephone || '';
@@ -128,25 +136,56 @@ async function charger(){
 $('#fSuivi').addEventListener('submit', async e => {
   e.preventDefault(); $('#eSuivi').hidden = true;
   const ref = $('#ref').value.trim().toUpperCase(), tel = $('#tel').value.trim();
-  if (!/^VF-[A-Z0-9]{6}$/.test(ref)) { $('#eSuivi').textContent = 'Indiquez la référence reçue (ex. VF-K7P3QX).'; $('#eSuivi').hidden = false; return; }
-  if (!tel) { $('#eSuivi').textContent = 'Indiquez le numéro WhatsApp utilisé pour la demande.'; $('#eSuivi').hidden = false; return; }
+  if (!/^VF-[A-Z0-9]{6}$/.test(ref)) { $('#eSuivi').textContent = T('Indiquez la référence reçue (ex. VF-K7P3QX).'); $('#eSuivi').hidden = false; return; }
+  if (!tel) { $('#eSuivi').textContent = T('Indiquez le numéro WhatsApp utilisé pour la demande.'); $('#eSuivi').hidden = false; return; }
   $('#bVoir').disabled = true;
   try {
     const j = await api('suivi', { demandes: [{ reference: ref, telephone: tel }] });
-    if (!(j.demandes || []).length) { $('#eSuivi').textContent = "Aucune demande avec cette référence et ce numéro. Vérifiez-les, ou écrivez-nous sur WhatsApp."; $('#eSuivi').hidden = false; return; }
+    if (!(j.demandes || []).length) { $('#eSuivi').textContent = T("Aucune demande avec cette référence et ce numéro. Vérifiez-les, ou écrivez-nous sur WhatsApp."); $('#eSuivi').hidden = false; return; }
     memo.ajouter(ref, tel); $('#fSuivi').reset(); await charger();
     $('#liste').scrollIntoView({ behavior: 'smooth' });
   } catch(err){ $('#eSuivi').textContent = err.message; $('#eSuivi').hidden = false; }
   finally { $('#bVoir').disabled = false; }
 });
 
-// Retour depuis la page Orange Money, ou lien reçu sur WhatsApp (?ref=VF-XXXXXX)
+// Retour depuis la page Orange Money, lien reçu sur WhatsApp (?ref=VF-XXXXXX),
+// ou lien « Faire payer un proche » (?p=VF-XXXXXX.signature) : la personne paie sans connaître le numéro du voyageur.
 const q = new URLSearchParams(location.search);
 const refURL = (q.get('ref') || '').toUpperCase();
-if (q.get('paye')) $('#bandeau').innerHTML = '<div class="info att">⏳ Nous vérifions votre paiement auprès d\'Orange Money. Cela peut prendre quelques secondes.</div>';
-if (q.get('annule')) $('#bandeau').innerHTML = '<div class="info non">Le paiement Orange Money a été annulé. Vous pouvez réessayer ci-dessous.</div>';
-if (refURL && !memo.lire().some(x => x.reference === refURL)) { $('#ref').value = refURL; $('#tel').focus(); }
-charger().then(() => { if (q.get('paye')) setTimeout(charger, 5000); });
+const LIEN = (q.get('p') || '').trim();
+if (q.get('paye')) $('#bandeau').innerHTML = `<div class="info att">${esc(T("⏳ Nous vérifions votre paiement auprès d'Orange Money. Cela peut prendre quelques secondes."))}</div>`;
+if (q.get('annule')) $('#bandeau').innerHTML = `<div class="info non">${esc(T('Le paiement Orange Money a été annulé. Vous pouvez réessayer ci-dessous.'))}</div>`;
+
+const jourLong = iso => { const d = new Date(String(iso || '').slice(0, 10) + 'T12:00:00'); return isNaN(d) ? '' : d.toLocaleDateString(LOC, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); };
+async function chargerProche(){
+  try {
+    const j = await api('suivi', { demandes: [{ lien: LIEN }] });
+    const d = (j.demandes || [])[0];
+    if (!d) throw new Error(T("Lien de paiement invalide ou incomplet. Demandez un nouveau lien à la personne qui vous l'a envoyé."));
+    if (j.paiement_infos) INFOS = j.paiement_infos;
+    const v = { ...d, lien: LIEN, proche: true };
+    const e = ETAPES[d.statut] ?? 1;
+    $('#liste').innerHTML = `<div class="dcard"><div class="dtop"><div><b>${esc(d.trajet || '')}</b><div class="muted">${esc(T('Réf. {r}', { r: d.reference }))}</div></div><span class="pill st-${esc(d.statut)}">${esc(T(LIB[d.statut] || d.statut))}</span></div>
+      ${d.statut === 'annulee' ? '' : `<div class="steps4">${[1,2,3,4].map(k => `<i class="${k <= e ? 'on' : ''}"></i>`).join('')}</div>`}
+      ${d.depart ? `<div class="r2"><span class="muted">${esc(T('Départ le {d}', { d: '' }).trim())}</span><b>${esc(jourLong(d.depart))}</b></div>` : ''}
+      ${(d.prenoms || []).length ? `<div class="r2"><span class="muted">${esc(T('Voyageur(s) : {p}', { p: '' }).trim())}</span><b>${esc(d.prenoms.join(', '))}</b></div>` : ''}
+      <div class="r2"><span class="muted">${T(d.prix_confirme ? 'Prix confirmé' : 'Prix indicatif')}</span><b>${prix(d.prix_gnf)}</b></div>
+      <div class="proche-info">${esc(T("Vous payez le billet d'un proche. Vérifiez le trajet et le prénom avant de payer."))}</div>
+      ${['nouvelle','en_cours'].includes(d.statut) ? `<div class="info att">${esc(T("Le prix n'est pas encore confirmé par le conseiller. Revenez sur ce lien un peu plus tard : le bouton de paiement apparaîtra ici."))}</div>` : ''}
+      ${d.statut === 'annulee' || d.statut === 'billet_envoye' ? `<p class="muted" style="margin-top:8px">${esc(T(EXPL[d.statut]))}</p>` : ''}
+      <div data-pay-box>${Paiement.html(v, INFOS)}</div></div>`;
+    Paiement.brancher($('#liste [data-pay-box]'), v, { api, toast, apres: chargerProche, ouvrir: url => { window.location.href = url; } });
+  } catch(err){ $('#liste').innerHTML = `<div class="info non">${esc(err.message)}</div>`; }
+}
+
+if (LIEN) {
+  document.querySelector('h1').textContent = T('Payer pour un proche');
+  $('#fSuivi').hidden = true;
+  chargerProche().then(() => { if (q.get('paye')) setTimeout(chargerProche, 5000); });
+} else {
+  if (refURL && !memo.lire().some(x => x.reference === refURL)) { $('#ref').value = refURL; $('#tel').focus(); }
+  charger().then(() => { if (q.get('paye')) setTimeout(charger, 5000); });
+}
 </script>
 </body>
 </html>
