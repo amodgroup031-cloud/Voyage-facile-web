@@ -1,18 +1,20 @@
 {
-  "web": "2026.11.27.3",
+  "web": "2026.11.27.4",
   "notes": [
+    "Choisissez votre compagnie (Air France, Ethiopian, ASKY, Royal Air Maroc…) avant la recherche, ou d'un geste dans les résultats",
     "Billet électronique : téléchargez votre billet directement dans « Mes voyages » dès que l'agence l'a joint",
     "Application en français et en anglais (bouton FR / EN en haut de l'écran)",
     "Ville de départ et destinations adaptées à votre pays, partout en Afrique et dans le monde",
     "« Faire payer un proche » : envoyez un lien sur WhatsApp, un parent paie votre billet en toute sécurité",
     "Compte à rebours avant le départ et liste de préparation dans « Mes voyages »"
   ],
-  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.27.3.zip",
-  "checksum": "c07e341c928a3b1a6198610b66d72d5620b3d6b2a860cefdf56cf9f2277cfee1",
+  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.27.4.zip",
+  "checksum": "5cbdd6d8a4f0480dc5395ae4cbab302282edf3e70997bc5371b1d2aa4859ef38",
   "native_min": 18,
   "apk": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/Voyage-Facile.apk",
   "apk_version": "1.0.18",
   "notes_en": [
+    "Choose your airline (Air France, Ethiopian, ASKY, Royal Air Maroc…) before searching, or with one tap in the results",
     "E-ticket: download your ticket directly in “My trips” as soon as the agency has attached it",
     "App in French and English (FR / EN button at the top of the screen)",
     "Departure city and destinations adapted to your country, across Africa and the world",

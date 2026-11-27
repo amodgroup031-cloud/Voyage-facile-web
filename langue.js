@@ -37,7 +37,8 @@
     'Affaires':'Business', 'Première':'First', 'Je préfère les vols directs (sans escale)':'I prefer direct flights (no stops)',
     'Rechercher les vols':'Search flights', 'Recherche des meilleurs vols…':'Finding the best flights…', 'Aucun aéroport trouvé':'No airport found',
     'Moins cher':'Cheapest', 'Plus rapide':'Fastest', 'Départ tôt':'Earliest', 'Direct uniquement':'Direct only', 'Bagage en soute':'Checked bag',
-    'Compagnie':'Airline', 'Le moins cher':'Cheapest', 'Le plus rapide':'Fastest', 'Direct':'Direct', 'direct':'direct', 'total':'total',
+    'Compagnie':'Airline', 'Compagnie (facultatif)':'Airline (optional)', 'Toutes les compagnies':'All airlines', 'Toutes':'All', 'vols':'flights', 'dès':'from',
+    'Compagnies africaines':'African airlines', 'Europe':'Europe', 'Moyen-Orient et Turquie':'Middle East and Turkey', 'Amériques':'Americas', 'Le moins cher':'Cheapest', 'Le plus rapide':'Fastest', 'Direct':'Direct', 'direct':'direct', 'total':'total',
     'Choisir ce vol':'Choose this flight', 'Aucun vol avec ces critères.':'No flights match these filters.', 'Voir tous les vols':'See all flights',
     'Aucun vol trouvé.':'No flights found.', 'Demander à un conseiller':'Ask an advisor', 'Aller':'Outbound',
     'Prix en':'Prices in', 'Changer':'Change',
@@ -270,7 +271,7 @@
   // ----- Traduction de l'affichage (anglais) -----
   // Zones jamais traduites : espace agence, messages écrits par le client ou par l'assistant (déjà dans sa langue).
   const IGNORER = '#v-agence, script, style, [data-no-t], .ia-m.me, .ia-m.bot';
-  const ATTRS = ['placeholder', 'aria-label', 'title'];
+  const ATTRS = ['placeholder', 'aria-label', 'title', 'label'];
   function texte(n){
     const brut = n.nodeValue; if (!brut || brut.length > 600) return;
     if (n.parentElement && n.parentElement.tagName === 'TEXTAREA') return;
