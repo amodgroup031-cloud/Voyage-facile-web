@@ -95,9 +95,44 @@
     return (window.L && window.L.code === 'en' && a[2]) || a[1];
   }
 
+  // Recherche instantanée d'une ville connue (sans Internet) : « Abi » → Abidjan, « dak » → Dakar, « abj » → Abidjan.
+  // Évite les confusions avec des aéroports lointains au code proche (ABI = Abilene, aux États-Unis).
+  const sansAccent = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+  let INDEX = null;
+  function index(){
+    if (INDEX) return INDEX;
+    INDEX = []; const vus = new Set();
+    const ANCIENS = new Set(['DKR']);   // ancien aéroport de Dakar, fermé aux vols commerciaux (Dakar = DSS)
+    const ajouter = (code, noms, pays) => { if (vus.has(code) || ANCIENS.has(code)) return; vus.add(code); INDEX.push({ code, noms: noms.filter(Boolean), pays }); };
+    for (const k in AEROPORTS) ajouter(AEROPORTS[k][0], AEROPORTS[k].slice(1), k);
+    for (const k in AMERIQUE) ajouter(AMERIQUE[k][0], AMERIQUE[k].slice(1), 'US');
+    for (const c in AUTRES) ajouter(c, AUTRES[c], null);
+    return INDEX;
+  }
+  let nomsPays = null;
+  try { nomsPays = new Intl.DisplayNames([window.L && window.L.code === 'en' ? 'en' : 'fr'], { type: 'region' }); } catch (e) {}
+  function chercher(q, max = 6){
+    const t = sansAccent(q); if (t.length < 2) return [];
+    const code = t.replace(/ /g, '').toUpperCase();
+    const res = [];
+    index().forEach((a, rang) => {
+      let s = 9;
+      for (const n of a.noms.map(sansAccent)) {
+        if (n.startsWith(t)) s = Math.min(s, 0);
+        else if (n.split(' ').some(m => m.startsWith(t))) s = Math.min(s, 1);
+      }
+      if (code.length === 3 && a.code === code) s = Math.min(s, 2);
+      if (s < 9) res.push({ s, rang, a });
+    });
+    res.sort((x, y) => x.s - y.s || x.rang - y.rang);
+    return res.slice(0, max).map(({ a }) => ({ code: a.code, ville: ville(a.code), nom: '', pays: a.pays && nomsPays ? (nomsPays.of(a.pays) || '') : '', local: true }));
+  }
+
   window.Pays = {
     code,
     ville,
+    chercher,
+    sansAccent,
     fuseau: tz,
     aeroport,
     francophone: !!code && FRANCOPHONES.has(code),

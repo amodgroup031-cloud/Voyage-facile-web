@@ -1,26 +1,14 @@
 {
-  "web": "2026.11.27.5",
+  "web": "2026.11.27.6",
   "notes": [
-    "Bouton « Détails » : voyez chaque vol, les escales et le temps d'attente avant de choisir",
-    "Choisissez votre compagnie (Air France, Ethiopian, ASKY, Royal Air Maroc…) avant la recherche, ou d'un geste dans les résultats",
-    "Billet électronique : téléchargez votre billet directement dans « Mes voyages » dès que l'agence l'a joint",
-    "Application en français et en anglais (bouton FR / EN en haut de l'écran)",
-    "Ville de départ et destinations adaptées à votre pays, partout en Afrique et dans le monde",
-    "« Faire payer un proche » : envoyez un lien sur WhatsApp, un parent paie votre billet en toute sécurité",
-    "Compte à rebours avant le départ et liste de préparation dans « Mes voyages »"
+    "Recherche de vols plus fiable et détails présentés comme un billet"
   ],
-  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.27.5.zip",
-  "checksum": "6da3a215a83abf07cf44a4758979efae136c9068136ae62cc2d97b064df0ac89",
+  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.27.6.zip",
+  "checksum": "009d073fdaef4c351ca26aa92ce689d8bc4dd49577d8926821028acbf8a1bc54",
   "native_min": 18,
   "apk": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/Voyage-Facile.apk",
   "apk_version": "1.0.18",
   "notes_en": [
-    "“Details” button: see each flight, the stops and the waiting time before you choose",
-    "Choose your airline (Air France, Ethiopian, ASKY, Royal Air Maroc…) before searching, or with one tap in the results",
-    "E-ticket: download your ticket directly in “My trips” as soon as the agency has attached it",
-    "App in French and English (FR / EN button at the top of the screen)",
-    "Departure city and destinations adapted to your country, across Africa and the world",
-    "“Ask someone to pay”: send a link on WhatsApp and a relative pays for your ticket safely",
-    "Countdown to departure and a travel checklist in “My trips”"
+    "More reliable flight search and details shown like a ticket"
   ]
 }

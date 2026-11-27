@@ -43,6 +43,7 @@
 .check{display:flex;gap:10px;align-items:flex-start;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);font-weight:500;margin:12px 0}
 .check input{width:22px;height:22px;min-height:0;flex:0 0 auto;margin-top:1px}
 .loading{display:flex;align-items:center;gap:10px;color:var(--muted);padding:18px 4px}
+.secours{display:flex;flex-direction:column;gap:10px}.secours>b{font-size:17px;color:var(--navy)}.secours p{margin:0}.secours .petit{font-size:13px;text-align:center}.secours .btn{text-align:center;text-decoration:none}
 .spin{width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--or);border-radius:50%;animation:s 0.8s linear infinite}
 @keyframes s{to{transform:rotate(360deg)}}
 .fbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:8px 0 4px}
@@ -71,7 +72,7 @@
   <!-- 1. RECHERCHE -->
   <section id="vSearch">
     <h1>Trouvez votre billet d'avion</h1>
-    <p class="sub">Prix réels du jour, dans votre monnaie, commission de l'agence comprise.</p>
+    <p class="sub">Prix réels du jour, prix total dans votre monnaie.</p>
     <form class="panel search" id="fSearch" novalidate>
       <div class="trip" role="radiogroup" aria-label="Type de voyage">
         <label><input type="radio" name="trip" value="ar" checked> Aller-retour</label>
@@ -91,7 +92,7 @@
       <button class="btn btn-or w100" type="submit" id="bSearch">Rechercher les vols</button>
       <div class="err" id="eSearch" hidden></div>
     </form>
-    <div id="loading" class="loading" hidden><div class="spin"></div>Recherche des meilleurs vols…</div>
+    <div id="loading" class="loading" hidden><div class="spin"></div><span id="loadTxt">Recherche des meilleurs vols…</span></div>
     <div class="results" id="results"></div>
   </section>
 
@@ -145,17 +146,27 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const gnf = n => Math.round(n).toLocaleString('fr-FR').replace(/[\u00a0\u202f]/g,' ') + ' GNF';
 const prix = n => window.Devise ? Devise.html(n) : gnf(n);
 const barreDevise = () => window.Devise ? `<div class="devise-bar"><span>Prix affichés en</span><select id="devSel" aria-label="Monnaie">${Devise.liste().map(d => `<option value="${d.code}"${d.code === Devise.code() ? ' selected' : ''}>${esc(d.nom)} (${d.code})</option>`).join('')}</select></div>` : '';
+const prixPour = n => n > 1 ? `Prix total pour ${n} passagers` : 'Prix total pour 1 passager';
 const waLink = t => 'https://wa.me/' + C.AGENCE_WHATSAPP + '?text=' + encodeURIComponent(t);
 let RECH = null, CHOIX = null, PARAMS = null;
 
 $('#waTop').href = waLink("Bonjour VOYAGE FACILE, j'ai une question sur un billet.");
 
+// Appel au serveur avec réessais automatiques en cas de coupure réseau ou de passerelle injoignable.
 async function api(action, data){
-  const r = await fetch(API, { method:'POST', headers:{ 'Content-Type':'application/json', 'apikey':C.SUPABASE_ANON_KEY, 'Authorization':'Bearer ' + C.SUPABASE_ANON_KEY },
-    body: JSON.stringify({ action, devise: window.Devise ? Devise.code() : 'GNF', ...data }) });
-  let j = {}; try { j = await r.json(); } catch(e){}
-  if(!r.ok) throw new Error(j.erreur || "Le service ne répond pas. Réessayez ou écrivez-nous sur WhatsApp.");
-  return j;
+  const corps = JSON.stringify({ action, devise: window.Devise ? Devise.code() : 'GNF', langue: window.L ? L.code : 'fr', ...data });
+  const max = ['recherche','aeroports','taux'].includes(action) ? 2 : 0;
+  for (let k = 0; ; k++) {
+    let r = null, j = {};
+    try {
+      r = await fetch(API, { method:'POST', headers:{ 'Content-Type':'application/json', 'apikey':C.SUPABASE_ANON_KEY, 'Authorization':'Bearer ' + C.SUPABASE_ANON_KEY }, body: corps });
+      try { j = await r.json(); } catch(e){}
+    } catch(e){ r = null; }
+    if ((!r || (!r.ok && !j.erreur)) && k < max) { await new Promise(ok => setTimeout(ok, 1500 * (k + 1))); continue; }
+    if (!r) { const e = new Error("Pas de connexion Internet. Vérifiez votre réseau puis réessayez."); e.reseau = true; throw e; }
+    if (!r.ok) { const e = new Error(j.erreur || "Le service ne répond pas. Réessayez ou écrivez-nous sur WhatsApp."); e.status = r.status; throw e; }
+    return j;
+  }
 }
 function etape(n){ [1,2,3,4].forEach(k => $('#st'+k).classList.toggle('on', k===n)); window.scrollTo({top:0, behavior:'smooth'}); }
 function show(id){ ['vSearch','vPax','vDone'].forEach(v => $('#'+v).hidden = v!==id); }
@@ -170,21 +181,35 @@ document.querySelectorAll('input[name=trip]').forEach(r => r.onchange = () => { 
 $('#d1').onchange = () => { $('#d2').min = $('#d1').value || today; if($('#d2').value && $('#d2').value < $('#d1').value) $('#d2').value=''; };
 
 /* ----- suggestions d'aéroports ----- */
+// Villes connues d'abord (instantané : « Abi » → Abidjan), puis les aéroports du fournisseur.
+const locaux = q => (window.Pays && Pays.chercher) ? Pays.chercher(q) : [];
+const norm = s => window.Pays && Pays.sansAccent ? Pays.sansAccent(s) : String(s || '').toLowerCase();
+function classer(q, liste){
+  const t = norm(q);
+  const note = a => norm(a.ville).startsWith(t) ? 0 : norm(a.nom).startsWith(t) ? 1 : (norm(a.ville) + ' ' + norm(a.nom)).split(' ').some(m => m.startsWith(t)) ? 2 : 3;
+  return liste.map((a, i) => ({ a, n: note(a), i })).sort((x, y) => x.n - y.n || x.i - y.i).map(x => x.a);
+}
+function fusion(a, b){ const vus = new Set(a.map(x => x.code)); return [...a, ...b.filter(x => x && x.code && !vus.has(x.code))].slice(0, 8); }
 function autocomplete(inp, list){
-  let t = null, items = [], idx = -1;
+  let t = null, items = [], idx = -1, tour = 0;
   const close = () => { list.hidden = true; idx = -1; };
   const pick = a => { inp.value = `${a.ville} (${a.code})`; inp.dataset.code = a.code; close(); };
+  const afficher = vide => {
+    list.innerHTML = items.length ? items.map((a,i) => `<li role="option" data-i="${i}"><b>${esc(a.ville)}</b> (${esc(a.code)})<div class="muted">${esc([a.nom, a.pays].filter(Boolean).join(' · '))}</div></li>`).join('') : (vide ? '<li class="muted">Aucun aéroport trouvé</li>' : '');
+    list.hidden = !list.innerHTML || document.activeElement !== inp; idx = -1;
+    list.querySelectorAll('li[data-i]').forEach(li => li.onmousedown = e => { e.preventDefault(); pick(items[li.dataset.i]); });
+  };
   inp.addEventListener('input', () => {
     inp.dataset.code = ''; clearTimeout(t);
     const q = inp.value.trim(); if(q.length < 2){ close(); return; }
+    const n = ++tour; const loc = locaux(q);
+    items = loc; afficher(false);
     t = setTimeout(async () => {
       try {
         const j = await api('aeroports', { q });
-        items = j.aeroports || [];
-        list.innerHTML = items.length ? items.map((a,i) => `<li role="option" data-i="${i}"><b>${esc(a.ville)}</b> (${esc(a.code)})<div class="muted">${esc(a.nom)} · ${esc(a.pays)}</div></li>`).join('') : '<li class="muted">Aucun aéroport trouvé</li>';
-        list.hidden = false;
-        list.querySelectorAll('li[data-i]').forEach(li => li.onmousedown = e => { e.preventDefault(); pick(items[li.dataset.i]); });
-      } catch(e){ close(); }
+        if (n !== tour) return;
+        items = fusion(loc, classer(q, j.aeroports || [])); afficher(true);
+      } catch(e){ if (n === tour && !items.length) close(); }
     }, 300);
   });
   inp.addEventListener('keydown', e => {
@@ -198,6 +223,17 @@ function autocomplete(inp, list){
 }
 autocomplete($('#from'), $('#fromList'));
 autocomplete($('#to'), $('#toList'));
+// Ville tapée sans toucher la liste : ville connue d'abord, sinon l'aéroport du fournisseur qui correspond le mieux.
+async function resoudre(inp){
+  if(inp.dataset.code) return inp.dataset.code;
+  const q = inp.value.trim(); if(q.length < 2) return '';
+  const fixer = a => { inp.value = `${a.ville} (${a.code})`; inp.dataset.code = a.code; return a.code; };
+  const m = q.match(/\(([A-Za-z]{3})\)\s*$/) || q.match(/^([A-Z]{3})$/);
+  if(m){ inp.dataset.code = m[1].toUpperCase(); return inp.dataset.code; }
+  const l = locaux(q)[0]; if(l) return fixer(l);
+  try { const j = await api('aeroports', { q }); const a = classer(q, j.aeroports || [])[0]; if(a) return fixer(a); } catch(e){}
+  return '';
+}
 
 /* ----- recherche ----- */
 const heure = iso => (iso||'').slice(11,16);
@@ -218,16 +254,18 @@ function bagages(o){ if(!o.bagages) return ''; const b=o.bagages; const p=[]; if
 $('#fSearch').addEventListener('submit', async e => {
   e.preventDefault(); $('#eSearch').hidden = true;
   const ar = document.querySelector('input[name=trip]:checked').value === 'ar';
+  $('#bSearch').disabled = true; await resoudre($('#from')); await resoudre($('#to')); $('#bSearch').disabled = false;
   const p = { origine: $('#from').dataset.code, destination: $('#to').dataset.code, date_aller: $('#d1').value,
               date_retour: ar ? $('#d2').value : null, adultes: +$('#ad').value, enfants: +$('#ch').value, classe: $('#cl').value,
               compagnie: ($('#comp') && $('#comp').value) || null };
   const errs = [];
-  if(!p.origine) errs.push('choisissez la ville de départ dans la liste');
-  if(!p.destination) errs.push('choisissez la destination dans la liste');
+  if(!p.origine) errs.push('la ville de départ (vérifiez l\'orthographe)');
+  if(!p.destination) errs.push('la destination (vérifiez l\'orthographe)');
   if(!p.date_aller) errs.push('indiquez la date de départ');
   if(ar && !p.date_retour) errs.push('indiquez la date de retour');
   if(errs.length){ $('#eSearch').textContent = 'Merci de compléter : ' + errs.join(', ') + '.'; $('#eSearch').hidden = false; return; }
   $('#bSearch').disabled = true; $('#results').innerHTML = ''; $('#loading').hidden = false;
+  const attente = attenteRecherche();
   try {
     const j = await api('recherche', p);
     PARAMS = p; RECH = j;
@@ -235,9 +273,29 @@ $('#fSearch').addEventListener('submit', async e => {
     FILTRE = { tri:'prix', direct: $('#direct').checked, compagnie:'', soute:false };
     renderOffres();
     etape(2); $('#results').scrollIntoView({behavior:'smooth'});
-  } catch(err){ $('#eSearch').textContent = err.message; $('#eSearch').hidden = false; }
-  finally { $('#bSearch').disabled = false; $('#loading').hidden = true; }
+  } catch(err){ secoursRecherche(p, err); }
+  finally { attente(); $('#bSearch').disabled = false; $('#loading').hidden = true; }
 });
+function attenteRecherche(){
+  const el = $('#loadTxt'); if (!el) return () => {};
+  const etapes = [[0, 'Recherche des meilleurs vols…'], [12000, 'Nous comparons les compagnies…'], [30000, "Encore un instant, nous vérifions d'autres compagnies…"], [60000, "La recherche prend un peu plus de temps que d'habitude, nous continuons…"]];
+  const m = etapes.map(([ms, t]) => setTimeout(() => { el.textContent = t; }, ms));
+  return () => { m.forEach(clearTimeout); el.textContent = etapes[0][1]; };
+}
+// Recherche qui échoue malgré les réessais : relancer d'un geste, ou demander le vol à un conseiller.
+function secoursRecherche(p, err){
+  const nom = c => (window.Pays ? Pays.ville(c) : c) + ` (${c})`;
+  const cl = $('#cl').selectedOptions[0] ? $('#cl').selectedOptions[0].textContent : p.classe;
+  const jj = x => { const t = new Date(x + 'T12:00:00'); return isNaN(t) ? x : t.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }); };
+  const nb = p.adultes + p.enfants;
+  const msg = `Bonjour VOYAGE FACILE, je cherche un vol ${nom(p.origine)} → ${nom(p.destination)}, départ le ${jj(p.date_aller)}${p.date_retour ? ', retour le ' + jj(p.date_retour) : ''}, ${nb > 1 ? nb + ' passagers' : '1 passager'}, classe ${cl}. Pouvez-vous m'aider ?`;
+  const dates = err && err.status === 422;
+  $('#results').innerHTML = `<div class="panel secours"><b>${dates ? 'Dates trop lointaines' : "La recherche n'a pas abouti"}</b><p class="muted">${esc(err.message)}</p>
+    ${dates ? '' : '<button class="btn btn-or" type="button" id="reLancer">Relancer la recherche</button>'}
+    <a class="btn btn-wa" href="${waLink(msg)}" target="_blank" rel="noopener">Demander ce vol à un conseiller</a>
+    <p class="muted petit">Votre conseiller cherche le vol pour vous et vous répond sur WhatsApp.</p></div>`;
+  if ($('#reLancer')) $('#reLancer').onclick = () => $('#fSearch').requestSubmit();
+}
 
 /* ----- tri et filtres : le client choisit vite le vol qu'il préfère ----- */
 let FILTRE = { tri:'prix', direct:false, compagnie:'', soute:false };
@@ -253,7 +311,7 @@ function renderOffres(){
     </div>`;
   const badge = o => [o.total_gnf === moinsCher ? '<span class="pill" style="background:#e3f5ea;color:#165c3d">Le moins cher</span>' : '', dureeTot(o) === plusRapide ? '<span class="pill" style="background:#eef4fb;color:#24456f">Le plus rapide</span>' : '', estDirect(o) ? '<span class="pill" style="background:#efe9fb;color:#4b2f86">Direct</span>' : ''].join(' ');
   const rangee = window.Compagnies ? Compagnies.rangee(toutes, FILTRE.compagnie, n => prix(n)) : '';
-  $('#results').innerHTML = barreDevise() + `<p class="muted">${l.length} vol(s) sur ${toutes.length} · prix pour ${p.adultes + p.enfants} passager(s), commission comprise. Prix indicatif, confirmé par votre conseiller avant paiement.</p>` + barre + rangee +
+  $('#results').innerHTML = barreDevise() + `<p class="muted">${l.length} vol${l.length > 1 ? 's' : ''} sur ${toutes.length} · ${prixPour(p.adultes + p.enfants)}. Prix indicatif, confirmé par votre conseiller avant paiement.</p>` + barre + rangee +
     (l.length ? l.map(o => `<article class="offer"><div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px">${badge(o)}</div>${legHTML(o.aller,'Aller')}${legHTML(o.retour,'Retour')}${bagages(o)}</div>
       <div class="price"><div><b>${prix(o.total_gnf)}</b><span class="muted">total</span></div><div class="pbtns"><button class="btn btn-ghost" type="button" data-det="${o.i}">Détails</button><button class="btn btn-or" type="button" data-i="${o.i}">Choisir ce vol</button></div></div></article>`).join('')
      : `<div class="panel">Aucun vol avec ces critères. <button class="btn btn-ghost" type="button" id="resetF">Voir tous les vols</button></div>`);
@@ -283,7 +341,7 @@ function choisir(i){
       <div><label for="pd${k}">Date de naissance${enfant?'':' (facultatif)'}</label><input id="pd${k}" type="date" max="${today}"${enfant?' required':''}></div></div></div>`;
   }
   $('#paxList').innerHTML = h;
-  $('#recap').innerHTML = `${legHTML(CHOIX.aller,'Aller')}${legHTML(CHOIX.retour,'Retour')}<div style="margin-top:6px"><b>Total indicatif : ${prix(CHOIX.total_gnf)}</b> <span class="muted">(${n} passager(s), commission comprise)</span></div>`;
+  $('#recap').innerHTML = `${legHTML(CHOIX.aller,'Aller')}${legHTML(CHOIX.retour,'Retour')}<div style="margin-top:6px"><b>Total indicatif : ${prix(CHOIX.total_gnf)}</b> <span class="muted">(${n > 1 ? n + ' passagers' : '1 passager'})</span></div>`;
   $('#ePax').hidden = true; show('vPax'); etape(3);
 }
 $('#bBack').onclick = () => { show('vSearch'); etape(2); };

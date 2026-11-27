@@ -18,7 +18,7 @@
     "Réservez votre billet d'avion depuis votre téléphone, sans vous déplacer.":'Book your plane ticket from your phone, without going anywhere.',
     'Réserver un vol':'Book a flight', 'Assistant 24h/24':'24/7 assistant', "Billets d'avion":'Plane tickets', 'Destinations populaires':'Popular destinations',
     'Nos services':'Our services', 'Comment ça marche ?':'How does it work?', 'Cherchez votre vol':'Search for your flight',
-    'Vrais vols du jour, prix dans votre monnaie, commission comprise.':"Today's real flights, prices in your currency, fees included.",
+    'Vrais vols du jour, prix total dans votre monnaie.':"Today's real flights, total price in your currency.",
     'Choisissez et confirmez':'Choose and confirm', 'Noms des passagers et votre numéro WhatsApp.':'Passenger names and your WhatsApp number.',
     'Un conseiller vous répond':'An advisor gets back to you',
     'Il confirme le prix sur WhatsApp, vous payez, vous recevez votre billet.':'They confirm the price on WhatsApp, you pay, you receive your ticket.',
@@ -29,7 +29,7 @@
     "Administration — réservé à l'agence VOYAGE FACILE":'Administration — VOYAGE FACILE agency only', 'Votre dernière demande':'Your latest request',
     'Vers les grandes villes':'To major cities', 'Partout dans le monde':'All over the world',
     // ---------- Recherche de vols ----------
-    'Où partez-vous ?':'Where are you going?', 'Vrais vols du jour, prix en GNF, commission comprise.':"Today's real flights, fees included.",
+    'Où partez-vous ?':'Where are you going?', 'Vrais vols du jour, prix en GNF.':"Today's real flights.",
     "Demander à l'assistant":'Ask the assistant', 'Type de voyage':'Trip type', 'Aller-retour':'Round trip', 'Aller simple':'One way',
     'Départ':'From', 'Inverser départ et destination':'Swap departure and destination', '⇅ Inverser':'⇅ Swap', 'Destination':'Destination',
     'Ville ou aéroport (ex. Paris)':'City or airport (e.g. Paris)', 'Ville ou aéroport':'City or airport', 'Départ le':'Departure date', 'Retour le':'Return date',
@@ -41,17 +41,19 @@
     'Compagnies africaines':'African airlines', 'Europe':'Europe', 'Moyen-Orient et Turquie':'Middle East and Turkey', 'Amériques':'Americas', 'Le moins cher':'Cheapest', 'Le plus rapide':'Fastest', 'Direct':'Direct', 'direct':'direct', 'total':'total',
     'Choisir ce vol':'Choose this flight', 'Détails':'Details', 'Détails du vol':'Flight details', 'Fermer':'Close', 'Retour aux vols':'Back to flights',
     'Vol {v}':'Flight {v}', 'opéré par {c}':'operated by {c}', 'Escale à {v}':'Layover in {v}', 'Longue escale':'Long layover', 'Escale de nuit':'Overnight layover',
-    "Changement d'aéroport : arrivée à {a}, départ de {b}. Prévoyez le trajet entre les deux.":'Airport change: you arrive at {a} and leave from {b}. Allow time to travel between them.',
-    'Escale(s) : {e}':'Stop(s): {e}', 'Durée totale : {d}':'Total duration: {d}', 'Classe : {c}':'Class: {c}',
+    "Changement d'aéroport : arrivée à l'aéroport {a}, départ de l'aéroport {b}. Prévoyez le trajet entre les deux.":'Airport change: you arrive at {a} and leave from {b}. Allow time to travel between them.',
+    'Escale(s) : {e}':'Stop(s): {e}', '1 escale':'1 stop', '{n} escales':'{n} stops', 'Arrivée {a} · Départ {b}':'Arrives {a} · Departs {b}', "d'attente":'wait',
+    'À confirmer':'To be confirmed', '1 passager':'1 passenger', '{n} passagers':'{n} passengers', 'Durée':'Duration', 'Escales':'Stops', 'Bagages':'Baggage',
+    'Prix total':'Total price', 'pour 1 passager':'for 1 passenger', 'pour {n} passagers':'for {n} passengers',
     'Bagages : votre conseiller vous confirme la franchise de la compagnie.':'Baggage: your advisor will confirm the airline allowance.',
     "Bagage en soute non compris dans ce prix : la compagnie le fait payer en plus. Demandez le tarif à votre conseiller.":'Checked bag not included in this price: the airline charges extra for it. Ask your advisor for the fee.',
     "Escale : vérifiez si un visa de transit est demandé pour le pays de l'escale.":'Layover: check whether a transit visa is required for the layover country.',
-    'pour {n} passager(s), commission comprise':'for {n} passenger(s), fees included',
     'Prix indicatif : votre conseiller confirme le prix et les places avec la compagnie avant tout paiement.':'Estimated price: your advisor confirms the price and seats with the airline before any payment.', 'Aucun vol avec ces critères.':'No flights match these filters.', 'Voir tous les vols':'See all flights',
     'Aucun vol trouvé.':'No flights found.', 'Demander à un conseiller':'Ask an advisor', 'Aller':'Outbound',
     'Prix en':'Prices in', 'Changer':'Change',
-    '{n} vol(s) sur {t} · prix pour {p} passager(s), commission comprise. Prix confirmé par votre conseiller avant paiement.':
-      '{n} flight(s) of {t} · price for {p} passenger(s), fees included. Price confirmed by your advisor before payment.',
+    '{n} vols sur {t}':'{n} flights of {t}', '{n} vol sur {t}':'{n} flight of {t}',
+    'Prix total pour 1 passager':'Total price for 1 passenger', 'Prix total pour {n} passagers':'Total price for {n} passengers',
+    'Prix confirmé par votre conseiller avant paiement.':'Price confirmed by your advisor before payment.',
     'Toutes les compagnies ({n})':'All airlines ({n})', '{n} escale(s)':'{n} stop(s)', '{n} bagage cabine':'{n} cabin bag', '{n} en soute':'{n} checked',
     'pas de bagage en soute':'no checked bag', 'Merci de compléter : {liste}.':'Please complete: {liste}.',
     "la ville de départ (vérifiez l'orthographe)":'the departure city (check the spelling)', "la destination (vérifiez l'orthographe)":'the destination (check the spelling)',
@@ -124,8 +126,8 @@
     'Choisie automatiquement selon votre pays. Les prix sont convertis depuis le franc guinéen (GNF) ; votre conseiller confirme le montant exact avant paiement.':
       'Chosen automatically from your country. Prices are converted from the Guinean franc (GNF); your advisor confirms the exact amount before payment.',
     'Questions fréquentes':'Frequently asked questions', 'Le prix affiché est-il définitif ?':'Is the displayed price final?',
-    "C'est le prix trouvé au moment de votre recherche, commission comprise. Votre conseiller le confirme avec la compagnie avant tout paiement.":
-      'It is the price found at the time of your search, fees included. Your advisor confirms it with the airline before any payment.',
+    "C'est le prix total trouvé au moment de votre recherche. Votre conseiller le confirme avec la compagnie avant tout paiement.":
+      'It is the total price found at the time of your search. Your advisor confirms it with the airline before any payment.',
     'Comment je paie ?':'How do I pay?',
     'Par Orange Money ou en agence, selon les instructions de votre conseiller. Ne communiquez jamais votre code secret.':
       "By Orange Money or at the agency, following your advisor's instructions. Never share your PIN.",
@@ -179,8 +181,16 @@
     "Indiquez votre numéro Orange Money (celui qui a payé).":'Enter your Orange Money number (the one that paid).',
     "Merci ! L'agence vérifie votre paiement.":'Thank you! The agency is checking your payment.', 'Une erreur est survenue. Réessayez.':'Something went wrong. Try again.',
     // ---------- Mise à jour ----------
-    'Mise à jour installée':'Update installed', 'Votre application VOYAGE FACILE est à jour.':'Your VOYAGE FACILE app is up to date.', 'Nouveautés':"What's new",
-    'Continuer':'Continue', 'Mise à jour en cours':'Updating', "Une nouvelle version de VOYAGE FACILE s'installe. Gardez l'application ouverte.":'A new version of VOYAGE FACILE is installing. Keep the app open.',
+    'Continuer':'Continue', 'Mise à jour disponible':'Update available', "Installation en cours, gardez l'application ouverte.":'Installing, please keep the app open.',
+    'Application mise à jour':'App updated',
+    // Recherche : attente et secours
+    'Nous comparons les compagnies…':'Comparing airlines…',
+    "Encore un instant, nous vérifions d'autres compagnies…":'One moment, checking more airlines…',
+    "La recherche prend un peu plus de temps que d'habitude, nous continuons…":'The search is taking a little longer than usual, still working…',
+    'Dates trop lointaines':'Dates too far ahead', "La recherche n'a pas abouti":"The search didn't go through", 'Relancer la recherche':'Search again',
+    'Demander ce vol à un conseiller':'Ask an advisor for this flight', 'Votre conseiller cherche le vol pour vous et vous répond sur WhatsApp.':'Your advisor looks for the flight and replies on WhatsApp.',
+    "Bonjour VOYAGE FACILE, je cherche un vol {o} → {d}, départ le {j}{r}, {n}, classe {c}. Pouvez-vous m'aider ?":'Hello VOYAGE FACILE, I am looking for a flight {o} → {d}, leaving on {j}{r}, {n}, {c} class. Can you help me?',
+    ', retour le {d}':', returning on {d}',
     'Téléchargement…':'Downloading…', 'Téléchargement… {p} %':'Downloading… {p}%', 'Installation…':'Installing…', 'Mise à jour reportée':'Update postponed',
     "Le téléchargement n'a pas abouti (connexion faible ?). Nous réessaierons automatiquement.":'The download did not finish (weak connection?). We will try again automatically.',
     'Nouvelle version à installer':'New version to install', 'Télécharger la nouvelle version':'Download the new version', 'Plus tard':'Later',
@@ -194,7 +204,7 @@
       "Hello and welcome to **VOYAGE FACILE**.\nI find your flight at the best price, prepare your booking and give you updates on your requests, any time.\nWhere would you like to go?",
     '{n} vol(s) trouvé(s) · {p} passager(s)':'{n} flight(s) found · {p} passenger(s)',
     '{n} autre(s) vol(s) : demandez-moi « plus rapide », « direct » ou une compagnie précise.':'{n} more flight(s): ask me for “fastest”, “direct” or a specific airline.',
-    'Prix commission comprise, confirmé par votre conseiller avant paiement.':'Price including fees, confirmed by your advisor before payment.',
+    'Prix total, confirmé par votre conseiller avant paiement.':'Total price, confirmed by your advisor before payment.',
     'Je choisis le vol n°{i} ({c}, départ {h}).':'I choose flight no. {i} ({c}, departing {h}).', 'Vérifiez votre demande':'Check your request',
     'Passager(s) :':'Passenger(s):', 'WhatsApp :':'WhatsApp:', 'Total':'Total', 'Demande envoyée · Référence':'Request sent · Reference',
     'Confirmer et envoyer':'Confirm and send', 'Un conseiller vérifie le prix avec la compagnie et vous contacte sur WhatsApp avant tout paiement.':
@@ -230,8 +240,8 @@
 
   // Phrases avec des parties variables (texte déjà affiché), pour les textes construits ailleurs.
   const MOTIFS = [
-    [/^(\d+) vol\(s\) sur (\d+) · prix pour (\d+) passager\(s\), commission comprise\. Prix confirmé par votre conseiller avant paiement\.$/,
-      '$1 flight(s) of $2 · price for $3 passenger(s), fees included. Price confirmed by your advisor before payment.'],
+    [/^(\d+) vols? sur (\d+) · Prix total pour (\d+) passagers?\. Prix confirmé par votre conseiller avant paiement\.$/,
+      '$1 of $2 flights · total price for $3 passenger(s). Price confirmed by your advisor before payment.'],
     [/^(.+) \(aller-retour\)$/, '$1 (round trip)'], [/^(.+) \(aller simple\)$/, '$1 (one way)'],
     [/^ex\. (MP[\w.]+)$/, 'e.g. $1'],
   ];

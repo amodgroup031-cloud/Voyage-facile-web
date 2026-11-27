@@ -67,7 +67,7 @@
       <div class="ia-offer"><div class="muted">${ech(o.aller.compagnie)}</div>${ligne(o.aller, 'Aller')}${ligne(o.retour, 'Retour')}
         <div class="ia-row"><b>${fgnf(o.total_gnf)}</b><button type="button" class="btn btn-or" data-i="${o.i}" data-c="${ech(o.aller.compagnie)}" data-h="${ech(hm(o.aller.depart_heure))}">Choisir ce vol</button></div></div>`).join('') +
       (offres.length > visibles.length ? `<p class="muted">${offres.length - visibles.length} autre(s) vol(s) : demandez-moi « plus rapide », « direct » ou une compagnie précise.</p>` : '') +
-      `<p class="muted">Prix commission comprise, confirmé par votre conseiller avant paiement.</p>`;
+      `<p class="muted">Prix total, confirmé par votre conseiller avant paiement.</p>`;
     d.querySelectorAll('[data-i]').forEach(b => b.onclick = () => envoyer(`Je choisis le vol n°${b.dataset.i} (${b.dataset.c}, départ ${b.dataset.h}).`));
     $m.appendChild(d); bas();
   }
