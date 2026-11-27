@@ -82,7 +82,8 @@
     'Votre billet vous a été envoyé sur WhatsApp. Bon voyage !':'Your ticket has been sent to you on WhatsApp. Have a good trip!',
     'Cette demande a été annulée. Écrivez-nous pour une nouvelle recherche.':'This request was cancelled. Message us for a new search.',
     "Aucun voyage pour l'instant.":'No trips yet.', 'Chercher un vol':'Search for a flight', 'Réf. {r}':'Ref. {r}', 'Prix indicatif':'Estimated price',
-    'Référence billet':'Ticket reference', "Écrire à l'agence":'Message the agency', 'Bonjour VOYAGE FACILE, au sujet de ma demande {r} :':'Hello VOYAGE FACILE, about my request {r}:',
+    'Référence billet':'Ticket reference', 'Votre billet est prêt : téléchargez-le ci-dessous. Bon voyage !':'Your ticket is ready: download it below. Have a good trip!', 'Télécharger mon billet':'Download my ticket', 'Ouverture de votre billet…':'Opening your ticket…',
+    "Le billet n'est pas encore disponible. Votre conseiller vous prévient sur WhatsApp dès qu'il est prêt.":'The ticket is not available yet. Your advisor will let you know on WhatsApp as soon as it is ready.', "Écrire à l'agence":'Message the agency', 'Bonjour VOYAGE FACILE, au sujet de ma demande {r} :':'Hello VOYAGE FACILE, about my request {r}:',
     // Rappels de voyage
     "Départ aujourd'hui":'Departure today', 'Départ demain':'Departure tomorrow', 'Départ dans {n} jours':'Departure in {n} days',
     'Préparation {a}/{b}':'Checklist {a}/{b}', 'Bon voyage !':'Have a good trip!',

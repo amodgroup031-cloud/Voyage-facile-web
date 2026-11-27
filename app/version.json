@@ -1,17 +1,19 @@
 {
-  "web": "2026.11.27.2",
+  "web": "2026.11.27.3",
   "notes": [
+    "Billet électronique : téléchargez votre billet directement dans « Mes voyages » dès que l'agence l'a joint",
     "Application en français et en anglais (bouton FR / EN en haut de l'écran)",
     "Ville de départ et destinations adaptées à votre pays, partout en Afrique et dans le monde",
     "« Faire payer un proche » : envoyez un lien sur WhatsApp, un parent paie votre billet en toute sécurité",
     "Compte à rebours avant le départ et liste de préparation dans « Mes voyages »"
   ],
-  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.27.2.zip",
-  "checksum": "284d9cd602d832c943998f2c49ca93c8b8f9ab6de2edaa10ad5e655bc0b762c0",
+  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.27.3.zip",
+  "checksum": "c07e341c928a3b1a6198610b66d72d5620b3d6b2a860cefdf56cf9f2277cfee1",
   "native_min": 18,
   "apk": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/Voyage-Facile.apk",
   "apk_version": "1.0.18",
   "notes_en": [
+    "E-ticket: download your ticket directly in “My trips” as soon as the agency has attached it",
     "App in French and English (FR / EN button at the top of the screen)",
     "Departure city and destinations adapted to your country, across Africa and the world",
     "“Ask someone to pay”: send a link on WhatsApp and a relative pays for your ticket safely",

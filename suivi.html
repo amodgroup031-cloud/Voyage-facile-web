@@ -113,6 +113,7 @@ function afficher(){
       <p class="muted" style="margin:6px 0">${esc(T(EXPL[d.statut] || ''))}</p>
       <div class="r2"><span class="muted">${T(d.prix_confirme ? 'Prix confirmé' : 'Prix indicatif')}</span><b>${prix(d.prix_gnf)}</b></div>
       ${d.billet_ref ? `<div class="r2"><span class="muted">${T('Référence billet')}</span><b>${esc(d.billet_ref)}</b></div>` : ''}
+      ${d.billet_fichier ? `<button class="btn btn-or w100" type="button" style="margin-top:10px" data-billet="${esc(d.reference)}">📄 ${T('Télécharger mon billet')}</button>` : ''}
       <div data-pay-box>${Paiement.html({ ...d, telephone: tel }, INFOS)}</div>
       <button class="oubli" type="button" data-oubli="${esc(d.reference)}">${T('Ne plus afficher cette demande sur cet appareil')}</button></div>`;
   }).join('');
@@ -120,6 +121,13 @@ function afficher(){
     const tel = (l.find(x => x.reference === d.reference) || {}).telephone || '';
     const carte = $('#liste').querySelector(`[data-ref="${CSS.escape(d.reference)}"] [data-pay-box]`);
     Paiement.brancher(carte, { ...d, telephone: tel }, { api, toast, apres: charger, ouvrir: url => { window.location.href = url; } });
+  });
+  $('#liste').querySelectorAll('[data-billet]').forEach(b => b.onclick = async () => {
+    const tel = (l.find(x => x.reference === b.dataset.billet) || {}).telephone || '';
+    b.disabled = true;
+    try { const j = await api('billet', { reference: b.dataset.billet, telephone: tel }); window.location.href = j.url; }
+    catch(e){ toast(e.message); }
+    finally { b.disabled = false; }
   });
   $('#liste').querySelectorAll('[data-oubli]').forEach(b => b.onclick = () => { memo.oublier(b.dataset.oubli); DEM = DEM.filter(d => d.reference !== b.dataset.oubli); afficher(); });
 }

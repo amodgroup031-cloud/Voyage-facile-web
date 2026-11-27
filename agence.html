@@ -32,6 +32,7 @@ dialog::backdrop{background:rgba(8,26,51,.55)}
 .box{background:var(--sky);border-radius:12px;padding:10px 12px;font-size:14px}
 .row{display:flex;justify-content:space-between;gap:10px}
 .acts{display:flex;gap:8px;flex-wrap:wrap}
+#bfBox .cards{display:flex;gap:8px;flex-wrap:wrap}
 @media(max-width:620px){.hrow{flex-wrap:wrap}.tabs{width:100%}.tab{flex:1}}
 [hidden]{display:none!important}
 </style>
@@ -120,6 +121,7 @@ dialog::backdrop{background:rgba(8,26,51,.55)}
 
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="billet-agence.js"></script>
 <script>
 const C = window.VF_CONFIG;
 const sb = window.supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY);
@@ -218,6 +220,7 @@ function ouvrir(id){
    <div class="box"><div class="row"><span>Client WhatsApp</span><b>${esc(d.telephone)}</b></div>${d.email?`<div class="row"><span>E-mail</span><span>${esc(d.email)}</span></div>`:''}${d.message_client?`<div style="margin-top:6px">💬 ${esc(d.message_client)}</div>`:''}</div>
    <div class="box"><div class="row"><span>Prix affiché au client</span><b>${gnf(d.prix_indicatif_gnf)}</b></div>${d.devise_client && d.devise_client !== 'GNF' && d.prix_client ? `<div class="row"><span>Vu par le client</span><span>${esc(Number(d.prix_client).toLocaleString('fr-FR') + ' ' + d.devise_client)}</span></div>` : ''}<div class="row"><span>dont commission</span><span>${gnf(d.commission_gnf)}</span></div><div class="row"><span>Prix trouvé</span><span>${o.prix_source ? esc(o.prix_source.montant+' '+o.prix_source.devise) : '—'}</span></div></div>
    <div class="box" id="payBox">${boitePaiement(d)}</div>
+   <div class="box" id="bfBox"></div>
    <div class="grid">
      <div><label for="xSt">Statut</label><select id="xSt">${Object.entries(LIB).map(([k,v])=>`<option value="${k}"${k===d.statut?' selected':''}>${v}</option>`).join('')}</select></div>
      <div><label for="xPf">Prix final au client (GNF)</label><input id="xPf" type="number" min="0" step="5000" value="${d.prix_final_gnf ?? ''}" placeholder="${d.prix_indicatif_gnf}"></div>
@@ -230,12 +233,17 @@ function ouvrir(id){
      <a class="btn btn-wa" target="_blank" rel="noopener" id="waBillet">WhatsApp : billet prêt</a>
      <a class="btn btn-ghost" href="tel:${esc(d.telephone)}">Appeler</a>
    </div>
-   <p class="muted">Joignez le billet (PDF) dans la conversation WhatsApp qui s'ouvre.</p>`;
+   <p class="muted">Le plus simple : joignez le billet dans l'encadré « Billet électronique » ci-dessus, le client le reçoit dans son application.</p>`;
   const majLiens = () => {
     const pf = +$('#xPf').value || d.prix_indicatif_gnf, ref = $('#xRef').value.trim();
+    if (d.billet_fichier && window.BilletAgence) { $('#waBillet').href = waClient(d.telephone, BilletAgence.message(d, SITE, ref || d.billet_ref)); return; }
     $('#waBillet').href = waClient(d.telephone, `Bonjour, ici VOYAGE FACILE ✈️\nVotre billet est prêt ! Référence de réservation : ${ref || '…'}\nTrajet : ${d.trajet}\nVous trouverez le billet électronique ci-joint. Bon voyage, et merci de votre confiance. Partez sans souci !`);
   };
   majLiens(); $('#xPf').oninput = majLiens; $('#xRef').oninput = majLiens;
+  if (window.BilletAgence) BilletAgence.monter($('#bfBox'), d, { sb, toast, site: SITE, ref: () => $('#xRef').value.trim(),
+    ouvrir: url => { const w = window.open(url, '_blank', 'noopener'); if (!w) toast('Touchez « Prévenir le client sur WhatsApp »'); },
+    apres: x => { $('#xSt').value = x.statut; if (x.billet_ref) $('#xRef').value = x.billet_ref; majLiens(); afficher(); } });
+  else $('#bfBox').hidden = true;
   $('#waPrix').onclick = async () => {
     const pf = +$('#xPf').value || d.prix_indicatif_gnf;
     const w = window.open('', '_blank');   // ouverte tout de suite (sinon le navigateur la bloque)
