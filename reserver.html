@@ -26,10 +26,14 @@
 .leg{display:flex;align-items:center;gap:10px;margin:4px 0}
 .leg .t{font-weight:700;color:var(--navy);font-size:17px;min-width:48px}
 .leg .line{flex:1;height:2px;background:var(--line);position:relative;min-width:40px}
+.leg-sous{font-size:12.5px;color:var(--muted);margin:-2px 0 6px;text-align:center}
+.leg-sous.direct{color:#1c7a4c;font-weight:700}
 .leg .line span{position:absolute;left:50%;top:-11px;transform:translateX(-50%);font-size:11px;color:var(--muted);background:#fff;padding:0 4px;white-space:nowrap}
 .price{text-align:right}
+.pbtns{display:flex;gap:8px;margin-top:8px;justify-content:flex-end}
+.pbtns .btn{white-space:nowrap}
 .price b{font-family:'Montserrat',sans-serif;color:var(--navy);font-size:20px;display:block;white-space:nowrap}
-@media(max-width:560px){.offer{grid-template-columns:1fr}.price{text-align:left;display:flex;justify-content:space-between;align-items:center;gap:10px}}
+@media(max-width:560px){.offer{grid-template-columns:1fr}.price{text-align:left;display:flex;flex-direction:column;align-items:stretch;gap:8px}.pbtns{display:grid;grid-template-columns:1fr 1.5fr;margin-top:0}}
 .steps{display:flex;gap:6px;margin:4px 0 14px;font-size:13px;color:var(--muted);flex-wrap:wrap}
 .steps span{padding:4px 10px;border-radius:999px;background:#e9eef5}
 .steps span.on{background:var(--navy);color:#fff}
@@ -131,6 +135,8 @@
 <script src="config.js"></script>
 <script src="devise.js"></script>
 <script src="compagnies.js"></script>
+<script src="pays.js"></script>
+<script src="detail-vol.js"></script>
 <script>
 const C = window.VF_CONFIG;
 const API = C.SUPABASE_URL + "/functions/v1/vf-api";
@@ -197,14 +203,15 @@ autocomplete($('#to'), $('#toList'));
 const heure = iso => (iso||'').slice(11,16);
 const jour = iso => { const d = new Date((iso||'').slice(0,10)+'T12:00:00'); return isNaN(d) ? '' : d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}); };
 const duree = m => m ? `${Math.floor(m/60)} h ${String(m%60).padStart(2,'0')}` : '';
-const escales = t => t.escales ? `${t.escales} escale${t.escales>1?'s':''} · ${t.escales_aeroports.join(', ')}` : 'Direct';
+const escales = t => t.escales ? `${t.escales} escale${t.escales>1?'s':''} · ${t.escales_aeroports.map(c => window.Pays && Pays.ville ? Pays.ville(c) : c).join(', ')}` : 'Direct';
 function legHTML(t, titre){
   if(!t) return '';
   const lendemain = t.arrivee_heure.slice(0,10) !== t.depart_heure.slice(0,10) ? ' <span class="muted">+1</span>' : '';
   return `<div class="muted">${titre} · ${esc(jour(t.depart_heure))} · ${esc(t.compagnie)}</div>
    <div class="leg"><span class="t">${esc(heure(t.depart_heure))}</span><span class="muted">${esc(t.depart_aeroport)}</span>
-   <span class="line"><span>${esc(duree(t.duree_min))} · ${esc(escales(t))}</span></span>
-   <span class="muted">${esc(t.arrivee_aeroport)}</span><span class="t">${esc(heure(t.arrivee_heure))}${lendemain}</span></div>`;
+   <span class="line"><span>${esc(duree(t.duree_min))}</span></span>
+   <span class="muted">${esc(t.arrivee_aeroport)}</span><span class="t">${esc(heure(t.arrivee_heure))}${lendemain}</span></div>
+   <div class="leg-sous${t.escales ? '' : ' direct'}">${esc(escales(t))}</div>`;
 }
 function bagages(o){ if(!o.bagages) return ''; const b=o.bagages; const p=[]; if(b.cabine!=null) p.push(b.cabine+' bagage cabine'); if(b.soute!=null) p.push(b.soute ? b.soute+' en soute' : 'pas de bagage en soute'); return p.length ? `<div class="muted">🧳 ${esc(p.join(' · '))}</div>` : ''; }
 
@@ -248,9 +255,13 @@ function renderOffres(){
   const rangee = window.Compagnies ? Compagnies.rangee(toutes, FILTRE.compagnie, n => prix(n)) : '';
   $('#results').innerHTML = barreDevise() + `<p class="muted">${l.length} vol(s) sur ${toutes.length} · prix pour ${p.adultes + p.enfants} passager(s), commission comprise. Prix indicatif, confirmé par votre conseiller avant paiement.</p>` + barre + rangee +
     (l.length ? l.map(o => `<article class="offer"><div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px">${badge(o)}</div>${legHTML(o.aller,'Aller')}${legHTML(o.retour,'Retour')}${bagages(o)}</div>
-      <div class="price"><div><b>${prix(o.total_gnf)}</b><span class="muted">total</span></div><button class="btn btn-or" type="button" data-i="${o.i}">Choisir ce vol</button></div></article>`).join('')
+      <div class="price"><div><b>${prix(o.total_gnf)}</b><span class="muted">total</span></div><div class="pbtns"><button class="btn btn-ghost" type="button" data-det="${o.i}">Détails</button><button class="btn btn-or" type="button" data-i="${o.i}">Choisir ce vol</button></div></div></article>`).join('')
      : `<div class="panel">Aucun vol avec ces critères. <button class="btn btn-ghost" type="button" id="resetF">Voir tous les vols</button></div>`);
   $('#results').querySelectorAll('button[data-i]').forEach(b => b.onclick = () => choisir(+b.dataset.i));
+  $('#results').querySelectorAll('[data-det]').forEach(b => b.onclick = () => {
+    const o = RECH.offres.find(x => x.i === +b.dataset.det);
+    if (o && window.DetailVol) DetailVol.ouvrir(o, { passagers: PARAMS.adultes + PARAMS.enfants, prix: n => prix(n), choisir: x => choisir(x.i) });
+  });
   $('#triBar').querySelectorAll('[data-tri]').forEach(b => b.onclick = () => { FILTRE.tri = b.dataset.tri; renderOffres(); });
   $('#triBar').querySelectorAll('[data-f]').forEach(b => b.onclick = () => { FILTRE[b.dataset.f] = !FILTRE[b.dataset.f]; renderOffres(); });
   if ($('#devSel')) $('#devSel').onchange = e => Devise.choisir(e.target.value);

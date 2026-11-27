@@ -57,6 +57,17 @@
   const AFRIQUE = new Set(['GN','SN','CI','ML','BF','NE','TG','BJ','GW','CM','GA','CG','CD','CF','TD','GQ','SL','LR','GM','MR','CV','MA','DZ',
     'TN','LY','EG','NG','GH','KE','ET','RW','ZA','UG','TZ','SD','AO','MZ','ZW','ZM','BI','DJ','MG','KM','MU']);
 
+  // Autres aéroports fréquents (escales, deuxièmes aéroports) : code → [nom français, nom anglais]
+  const AUTRES = {
+    ORY:['Paris-Orly'], BVA:['Paris-Beauvais'], LGW:['Londres-Gatwick','London Gatwick'], STN:['Londres-Stansted','London Stansted'], MAN:['Manchester'],
+    BCN:['Barcelone','Barcelona'], MXP:['Milan'], LIN:['Milan'], MRS:['Marseille'], LYS:['Lyon'], TLS:['Toulouse'], BOD:['Bordeaux'], ZRH:['Zurich'],
+    MUC:['Munich'], CRL:['Bruxelles-Charleroi','Brussels Charleroi'], AUH:['Abou Dabi','Abu Dhabi'], DWC:['Dubaï','Dubai'], RUH:['Riyad','Riyadh'],
+    MED:['Médine','Medina'], SAW:['Istanbul'], IAD:['Washington'], ATL:['Atlanta'], EWR:['Newark'], BOS:['Boston'], IAH:['Houston'],
+    RAK:['Marrakech'], AGA:['Agadir'], TNG:['Tanger','Tangier'], ORN:['Oran'], DKR:['Dakar'], ABV:['Abuja'], KAN:['Kano'], KMS:['Kumasi'],
+    BOY:['Bobo-Dioulasso'], NSI:['Yaoundé'], PNR:['Pointe-Noire'], JRO:['Kilimandjaro','Kilimanjaro'], ZNZ:['Zanzibar'], CPT:['Le Cap','Cape Town'],
+    HRG:['Hurghada'], PEK:['Pékin','Beijing'], PVG:['Shanghai'], BKK:['Bangkok'], BOM:['Bombay','Mumbai'], LAS:['Las Vegas'], MIA:['Miami'],
+  };
+
   let tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch(e){}
   function detecter(){
     if (FUSEAUX[tz]) return FUSEAUX[tz];
@@ -74,8 +85,19 @@
     return { code: a[0], ville: en && a[2] ? a[2] : a[1] };
   }
 
+  // Nom de la ville d'un aéroport (dans la langue de l'application), ou le code s'il est inconnu.
+  function ville(c){
+    c = String(c || '').toUpperCase();
+    let a = AUTRES[c] ? [c, ...AUTRES[c]] : null;
+    if (!a) for (const k in AEROPORTS) if (AEROPORTS[k][0] === c) { a = AEROPORTS[k]; break; }
+    if (!a) for (const k in AMERIQUE) if (AMERIQUE[k][0] === c) { a = AMERIQUE[k]; break; }
+    if (!a) return c;
+    return (window.L && window.L.code === 'en' && a[2]) || a[1];
+  }
+
   window.Pays = {
     code,
+    ville,
     fuseau: tz,
     aeroport,
     francophone: !!code && FRANCOPHONES.has(code),
