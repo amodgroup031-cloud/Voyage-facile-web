@@ -1,14 +1,14 @@
 {
-  "web": "2026.11.27.6",
+  "web": "2026.11.28.1",
   "notes": [
-    "Recherche de vols plus fiable et détails présentés comme un billet"
+    "Messages et paiement plus simples"
   ],
-  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.27.6.zip",
-  "checksum": "009d073fdaef4c351ca26aa92ce689d8bc4dd49577d8926821028acbf8a1bc54",
+  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.28.1.zip",
+  "checksum": "46858f861fb2f24bd195510e263cc5fed9ceebfcbd9bc281dd64c00007b87cc2",
   "native_min": 18,
   "apk": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/Voyage-Facile.apk",
   "apk_version": "1.0.18",
   "notes_en": [
-    "More reliable flight search and details shown like a ticket"
+    "Simpler messages and payment"
   ]
 }

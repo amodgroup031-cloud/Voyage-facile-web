@@ -15,6 +15,7 @@
 
   // Message WhatsApp au client : le billet est prêt dans l'application.
   function message(d, site, ref){
+    if (window.MessagesClient) return MessagesClient.billet(d, ref, MessagesClient.lienConnu(d));
     return `Bonjour, ici VOYAGE FACILE.\nVotre billet est prêt !${ref ? '\nRéférence de réservation : ' + ref : ''}\nTrajet : ${d.trajet}\n\n` +
       `Téléchargez votre billet dans l'application VOYAGE FACILE, rubrique « Mes voyages » (touchez « Actualiser »).\n` +
       `Sans l'application : ${site}/suivi.html?ref=${encodeURIComponent(d.id)} (avec votre numéro WhatsApp).\n\nMerci de votre confiance, et partez sans souci !`;

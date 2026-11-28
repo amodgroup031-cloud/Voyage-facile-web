@@ -121,6 +121,8 @@ dialog::backdrop{background:rgba(8,26,51,.55)}
 
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="pays.js"></script>
+<script src="messages-client.js"></script>
 <script src="billet-agence.js"></script>
 <script>
 const C = window.VF_CONFIG;
@@ -234,12 +236,15 @@ function ouvrir(id){
      <a class="btn btn-ghost" href="tel:${esc(d.telephone)}">Appeler</a>
    </div>
    <p class="muted">Le plus simple : joignez le billet dans l'encadré « Billet électronique » ci-dessus, le client le reçoit dans son application.</p>`;
+  const MC = window.MessagesClient;
   const majLiens = () => {
-    const pf = +$('#xPf').value || d.prix_indicatif_gnf, ref = $('#xRef').value.trim();
-    if (d.billet_fichier && window.BilletAgence) { $('#waBillet').href = waClient(d.telephone, BilletAgence.message(d, SITE, ref || d.billet_ref)); return; }
-    $('#waBillet').href = waClient(d.telephone, `Bonjour, ici VOYAGE FACILE ✈️\nVotre billet est prêt ! Référence de réservation : ${ref || '…'}\nTrajet : ${d.trajet}\nVous trouverez le billet électronique ci-joint. Bon voyage, et merci de votre confiance. Partez sans souci !`);
+    const ref = $('#xRef').value.trim() || d.billet_ref || '';
+    if (d.billet_fichier && window.BilletAgence) { $('#waBillet').href = waClient(d.telephone, BilletAgence.message(d, SITE, ref)); return; }
+    $('#waBillet').href = waClient(d.telephone, MC ? MC.billetJoint(d, ref) : `Bonjour, ici VOYAGE FACILE ✈️\nVotre billet est prêt (réservation ${ref || '…'}).\nVous le trouverez ci-joint. Bon voyage !`);
   };
   majLiens(); $('#xPf').oninput = majLiens; $('#xRef').oninput = majLiens;
+  // Lien personnel du client préparé tout de suite : les boutons WhatsApp l'utilisent dès qu'il est prêt.
+  if (MC && d.statut !== 'annulee') MC.lien(d).then(() => { if (!$('#dlg').open || !$('#dTitle').textContent.startsWith(d.id)) return; majLiens(); $('#payBox').innerHTML = boitePaiement(d); brancherPaiement(d); });
   if (window.BilletAgence) BilletAgence.monter($('#bfBox'), d, { sb, toast, site: SITE, ref: () => $('#xRef').value.trim(),
     ouvrir: url => { const w = window.open(url, '_blank', 'noopener'); if (!w) toast('Touchez « Prévenir le client sur WhatsApp »'); },
     apres: x => { $('#xSt').value = x.statut; if (x.billet_ref) $('#xRef').value = x.billet_ref; majLiens(); afficher(); } });
@@ -253,7 +258,8 @@ function ouvrir(id){
       if (error) { if (w) w.close(); toast('Enregistrement du prix impossible'); return; }
       Object.assign(d, maj); $('#xSt').value = 'confirmee'; afficher(); toast('Prix confirmé enregistré');
     }
-    const url = waClient(d.telephone, messagePrix(d, pf));
+    const lienClient = MC ? await MC.lien(d) : null;
+    const url = waClient(d.telephone, MC ? MC.prix(d, pf, lienClient) : messagePrix(d, pf));
     if (w) w.location.href = url; else window.location.href = url;
   };
   brancherPaiement(d);
@@ -288,8 +294,9 @@ function boitePaiement(d){
   if (d.paiement_maj) h += `<div class="row"><span>Le</span><span>${esc(new Date(d.paiement_maj).toLocaleString('fr-FR'))}</span></div>`;
   if (p === 'declare' || p === 'en_cours') h += `<p class="muted" style="margin:6px 0">Vérifiez sur le compte Orange Money de l'agence que le montant est arrivé avec cette référence.</p><div class="acts"><button class="btn btn-navy" type="button" data-pay-a="recu">✅ Paiement reçu</button><button class="btn btn-ghost" type="button" data-pay-a="refuse">❌ Référence introuvable</button></div>`;
   else if (p === 'aucun' || p === 'refuse') h += `<div class="acts" style="margin-top:6px"><button class="btn btn-ghost" type="button" data-pay-a="agence">Paiement reçu en agence</button></div>`;
-  if (p === 'recu') h += `<div class="acts" style="margin-top:6px"><a class="btn btn-wa" target="_blank" rel="noopener" href="${waClient(d.telephone, `Bonjour, ici VOYAGE FACILE.\nNous avons bien reçu votre paiement de ${gnf(d.paiement_montant_gnf || d.prix_final_gnf || d.prix_indicatif_gnf)} pour la demande ${d.id}. Merci ! Votre billet est en préparation.`)}">WhatsApp au client : paiement reçu</a></div>`;
-  if (p === 'refuse') h += `<div class="acts" style="margin-top:6px"><a class="btn btn-wa" target="_blank" rel="noopener" href="${waClient(d.telephone, `Bonjour, ici VOYAGE FACILE.\nNous ne retrouvons pas le paiement avec la référence ${d.paiement_ref || ''} pour la demande ${d.id}. Pouvez-vous vérifier le SMS d'Orange Money et nous renvoyer la bonne référence (ou une capture du SMS) ? Merci.`)}">WhatsApp au client : référence introuvable</a></div>`;
+  const MC = window.MessagesClient;
+  if (p === 'recu') h += `<div class="acts" style="margin-top:6px"><a class="btn btn-wa" target="_blank" rel="noopener" href="${esc(waClient(d.telephone, MC ? MC.recu(d) : `Bonjour, ici VOYAGE FACILE.\nPaiement bien reçu : ${gnf(d.paiement_montant_gnf || d.prix_final_gnf || d.prix_indicatif_gnf)}. Merci !\nRéférence : ${d.id}`))}">WhatsApp au client : paiement reçu</a></div>`;
+  if (p === 'refuse') h += `<div class="acts" style="margin-top:6px"><a class="btn btn-wa" target="_blank" rel="noopener" href="${esc(waClient(d.telephone, MC ? MC.refuse(d, MC.lienConnu(d)) : `Bonjour, ici VOYAGE FACILE.\nNous ne trouvons pas votre paiement (référence ${d.paiement_ref || ''}). Merci de vérifier le SMS d'Orange Money.\nRéférence : ${d.id}`))}">WhatsApp au client : référence introuvable</a></div>`;
   return h;
 }
 function brancherPaiement(d){

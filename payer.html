@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Payer mon billet – VOYAGE FACILE</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0b2545">
+<link rel="icon" href="icone.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0b2545;--navy2:#13315c;--or:#f28c28;--vert:#1f8a5b;--wa:#25d366;--muted:#5b6b80;--ligne:#dde5ee;--fond:#eef3f9}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--fond);color:var(--navy);font-size:16px;line-height:1.45;min-height:100vh}
+.haut{background:var(--navy);color:#fff;display:flex;align-items:center;gap:10px;padding:12px 18px;padding-top:max(12px,env(safe-area-inset-top))}
+.haut b{font-family:'Montserrat',sans-serif;font-size:18px;letter-spacing:.04em}.haut b span{color:var(--or)}
+main{max-width:480px;margin:0 auto;padding:16px 16px 8px}
+.carte{background:#fff;border-radius:20px;box-shadow:0 6px 22px rgba(11,37,69,.10);overflow:hidden}
+.voyage{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:18px 18px 16px;display:flex;flex-direction:column;gap:3px}
+.voyage .etiq{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#f6b56f}
+.voyage .trajet{font-family:'Montserrat',sans-serif;font-size:22px;line-height:1.2}
+.voyage span{color:#d7e2f0;font-size:14.5px}
+.voyage .ref{margin-top:6px;font-size:13px}.voyage .ref b{color:#fff}
+.corps{padding:18px}
+.montant{display:flex;flex-direction:column;align-items:center;text-align:center;padding:6px 0 16px}
+.montant span{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.montant b{font-family:'Montserrat',sans-serif;font-size:32px;line-height:1.15;margin-top:2px}
+.montant small{color:var(--muted);font-size:13.5px}
+.gros{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:56px;border-radius:16px;border:0;font:inherit;font-weight:800;font-size:17px;cursor:pointer;text-decoration:none;margin-top:10px}
+.gros.or{background:var(--or);color:var(--navy)}.gros.vert{background:var(--vert);color:#fff}.gros.wa{background:var(--wa);color:#fff}
+.gros.ghost{background:#fff;color:var(--navy);border:1.5px solid var(--ligne)}
+.gros:disabled{opacity:.6}
+.etape{display:flex;gap:10px;padding:14px 0;border-top:1px solid var(--ligne)}
+.etape:first-of-type{border-top:0}
+.etape .n{flex:0 0 28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:15px}
+.etape>div{flex:1;min-width:0}
+.etape>div>b{display:block;font-size:16px;margin-bottom:6px}
+.ligne{display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:8px;background:var(--fond);border-radius:12px;padding:9px 12px;margin-top:6px}
+.ligne span{grid-column:1;font-size:12.5px;color:var(--muted)}
+.ligne b{grid-column:1;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ligne .copier{grid-column:2;grid-row:1 / span 2}
+.copier{border:1.5px solid var(--navy);background:#fff;color:var(--navy);border-radius:10px;padding:6px 10px;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
+.copier.ok{background:var(--vert);border-color:var(--vert);color:#fff}
+.note{font-size:13.5px;color:var(--muted);margin-top:6px}.centre{text-align:center}
+label{display:block;font-size:14px;font-weight:700;margin:12px 0 5px}
+input{width:100%;min-height:52px;border:1.5px solid var(--ligne);border-radius:14px;padding:0 14px;font:inherit;font-size:17px;color:var(--navy);background:#fff}
+input:focus{outline:none;border-color:var(--or)}
+.lien{background:none;border:0;color:var(--navy2);font:inherit;font-size:14px;text-decoration:underline;margin-top:10px;cursor:pointer}
+.err{background:#fdecec;color:#9b1c1c;border-radius:12px;padding:10px 12px;font-size:14.5px;margin-top:10px}
+.etat{border-radius:16px;padding:16px;text-align:center;margin-bottom:6px}
+.etat b{display:block;font-size:18px;margin-bottom:4px}.etat p{font-size:14.5px}
+.etat .ico{font-size:34px;line-height:1;margin-bottom:6px;display:block}
+.etat.ok{background:#e6f5ee;color:#13573a}.etat.att{background:#fff6e8;color:#7a4a00}.etat.non{background:#fdecec;color:#9b1c1c}
+details.autre{margin-top:14px;border-top:1px solid var(--ligne);padding-top:10px}
+details.autre summary{cursor:pointer;color:var(--navy2);font-weight:700;font-size:15px;padding:6px 0}
+.chargement{display:flex;flex-direction:column;align-items:center;gap:12px;padding:60px 0;color:var(--muted)}
+.spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--ligne);border-top-color:var(--or);animation:t 1s linear infinite}
+@keyframes t{to{transform:rotate(360deg)}}
+footer{max-width:480px;margin:0 auto;padding:14px 18px calc(24px + env(safe-area-inset-bottom));text-align:center;font-size:13.5px;color:var(--muted)}
+footer a{color:var(--navy2);font-weight:700}
+footer p{margin-top:6px}
+</style>
+</head>
+<body>
+<header class="haut">
+  <svg width="34" height="34" viewBox="14 0 112 112" aria-hidden="true"><path d="M56 100 C56 100 22 70 22 45 C22 26 37 11 56 11 C75 11 90 26 90 45 C90 70 56 100 56 100 Z" fill="#ffffff"/><path d="M40 46 L52 58 L73 35" fill="none" stroke="#0b2545" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/><path transform="translate(96 18) rotate(-40) scale(1.25)" d="M17 0 C17 -1.5 15.6 -2.5 13 -2.5 L4.6 -2.5 L-4.8 -15.5 L-8.8 -15.5 L-3.4 -2.5 L-10.4 -2.5 L-13.8 -7.6 L-16.4 -7.6 L-14.4 -2 L-15.4 0 L-14.4 2 L-16.4 7.6 L-13.8 7.6 L-10.4 2.5 L-3.4 2.5 L-8.8 15.5 L-4.8 15.5 L4.6 2.5 L13 2.5 C15.6 2.5 17 1.5 17 0 Z" fill="#f28c28"/></svg>
+  <b data-no-t>VOYAGE <span>FACILE</span></b>
+</header>
+<main id="app"><div class="chargement"><div class="spin"></div><span>Chargement…</span></div></main>
+<footer>
+  <a id="aide" href="#">Besoin d'aide ? Écrivez-nous sur WhatsApp</a>
+  <p>Nous ne vous demanderons jamais votre code secret Orange Money.</p>
+</footer>
+<script src="config.js"></script>
+<script src="pays.js"></script>
+<script src="langue.js"></script>
+<script>
+/* Page de paiement simple : le client arrive par son lien personnel (message WhatsApp de l'agence),
+   sans rien taper. Un seul écran : son voyage, le montant, et comment payer. */
+const C = window.VF_CONFIG, API = C.SUPABASE_URL + '/functions/v1/vf-api';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const T = (s, v) => window.L ? L.t(s, v) : (v ? s.replace(/\{(\w+)\}/g, (_, k) => v[k] != null ? v[k] : '') : s);
+const LOC = (window.L && L.loc) || 'fr-FR';
+const gnf = n => Math.round(n || 0).toLocaleString('fr-FR').replace(/[  ]/g, ' ') + ' GNF';
+const ville = c => (window.Pays && Pays.ville) ? Pays.ville(c) : c;
+const wa = t => 'https://wa.me/' + C.AGENCE_WHATSAPP + '?text=' + encodeURIComponent(t);
+const morceaux = location.search.slice(1).split('&').map(x => { try { return decodeURIComponent(x).trim(); } catch(e){ return x; } });
+const CLE = morceaux.find(x => /^VF-[A-Z2-9]{6}-[A-Za-z0-9_-]{12}$/.test(x)) || '';
+const PAYE = morceaux.includes('paye=1'), ANNULE = morceaux.includes('annule=1');
+let D = null, INFOS = {}, DECLARER = false, BANDEAU = '';
+
+$('#aide').href = wa(T("Bonjour VOYAGE FACILE, j'ai besoin d'aide pour payer mon billet."));
+
+// Appel au serveur, avec réessais automatiques si le réseau coupe.
+async function api(action, data){
+  const corps = JSON.stringify({ action, langue: window.L ? L.code : 'fr', ...data });
+  for (let k = 0; ; k++) {
+    let r = null, j = {};
+    try {
+      r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': C.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + C.SUPABASE_ANON_KEY }, body: corps });
+      try { j = await r.json(); } catch(e){}
+    } catch(e){ r = null; }
+    if ((!r || (!r.ok && !j.erreur)) && k < 2) { await new Promise(ok => setTimeout(ok, 1500 * (k + 1))); continue; }
+    if (!r) throw new Error(T('Pas de connexion Internet. Vérifiez votre réseau puis réessayez.'));
+    if (!r.ok) throw new Error(j.erreur || T('Le service ne répond pas. Réessayez ou écrivez-nous sur WhatsApp.'));
+    return j;
+  }
+}
+
+const dateLongue = iso => { const d = new Date(String(iso || '').slice(0, 10) + 'T12:00:00'); return isNaN(d) ? '' : d.toLocaleDateString(LOC, { weekday: 'long', day: 'numeric', month: 'long' }); };
+const telAff = t => { const d = String(t || '').replace(/\D/g, ''); return d.startsWith('224') && d.length === 12 ? `+224 ${d.slice(3,6)} ${d.slice(6,8)} ${d.slice(8,10)} ${d.slice(10)}` : String(t || ''); };
+const telLocal = t => { const d = String(t || '').replace(/\D/g, ''); return d.startsWith('224') ? d.slice(3) : d; };
+const etat = (genre, ico, titre, texte) => `<div class="etat ${genre}"><span class="ico" aria-hidden="true">${ico}</span><b>${esc(titre)}</b>${texte ? `<p>${esc(texte)}</p>` : ''}</div>`;
+const ligne = (nom, valeur, copie) => `<div class="ligne"><span>${esc(nom)}</span><b data-no-t>${esc(valeur)}</b>${copie ? `<button class="copier" type="button" data-copie="${esc(copie)}">${T('Copier')}</button>` : ''}</div>`;
+
+function entete(d){
+  const trajet = d.de && d.vers ? `${ville(d.de)} → ${ville(d.vers)}` : String(d.trajet || '').replace(/\s*\((aller-retour|aller simple)\)/, '');
+  const dates = d.depart ? dateLongue(d.depart) + (d.retour ? ' – ' + dateLongue(d.retour) : '') : '';
+  return `<div class="voyage"><span class="etiq">${T(d.retour ? 'Votre voyage aller-retour' : 'Votre voyage')}</span>
+    <b class="trajet" data-no-t>${esc(trajet)}</b>
+    ${dates ? `<span data-no-t>${esc(dates)}</span>` : ''}
+    ${(d.prenoms || []).length ? `<span data-no-t>${esc(d.prenoms.join(', '))}</span>` : ''}
+    <span class="ref">${T('Référence')} <b data-no-t>${esc(d.reference)}</b></span></div>`;
+}
+
+function guide(m, enLigne){
+  const marchand = INFOS.om_code_marchand, num = INFOS.om_numero;
+  const code = marchand ? '*144*6#' : '*144#';
+  let h = enLigne ? `<details class="autre"><summary>${T('Ou payer avec le code *144#')}</summary>` : '';
+  h += `<div class="etape"><span class="n">1</span><div><b>${T('Envoyez le montant par Orange Money')}</b>`;
+  h += marchand ? ligne(T('Code marchand'), marchand, marchand) : ligne(T('Numéro'), telAff(num), telLocal(num));
+  if (!marchand && INFOS.om_titulaire) h += ligne(T('Nom'), INFOS.om_titulaire, '');
+  h += ligne(T('Montant'), gnf(m), String(Math.round(m)));
+  h += `<a class="gros or" href="tel:${encodeURIComponent(code)}">${T('Ouvrir Orange Money')} <span data-no-t>(${code})</span></a>`;
+  h += `<p class="note">${T('Validez avec votre code secret. Ne le donnez à personne, même pas à l\'agence.')}</p></div></div>`;
+  h += `<div class="etape"><span class="n">2</span><div><b>${T('Après le paiement')}</b>`;
+  if (!DECLARER) h += `<p class="note">${T('Orange Money vous envoie un SMS avec une référence de transaction.')}</p><button class="gros ghost" type="button" data-a="jai-paye">${T("J'ai payé")}</button>`;
+  else h += `<label for="ref">${T('Collez la référence reçue par SMS')}</label>
+    <input id="ref" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="MP261128.1530.A12345">
+    <button class="lien" type="button" data-a="autre-num">${T('Payé depuis un autre numéro ?')}</button>
+    <div id="autreNum" hidden><label for="tel">${T('Numéro Orange Money qui a payé')}</label><input id="tel" type="tel" inputmode="tel" placeholder="+224 6__ __ __ __"></div>
+    <button class="gros vert" type="button" data-a="envoyer">${T('Envoyer la référence')}</button><div class="err" id="err" hidden></div>`;
+  h += `</div></div>`;
+  return h + (enLigne ? '</details>' : '');
+}
+
+function afficher(){
+  const d = D, p = (d.paiement && d.paiement.statut) || 'aucun', m = (d.paiement && d.paiement.montant_gnf) || d.prix_gnf;
+  let h = BANDEAU;
+  if (d.statut === 'annulee') h += etat('non', '✕', T('Cette demande est annulée.'), T('Pour toute question, écrivez-nous sur WhatsApp.'));
+  else if (p === 'recu') {
+    h += etat('ok', '✅', T('Paiement reçu, merci !'), d.billet_fichier ? T('Votre billet est prêt.') : T('Votre billet arrive très bientôt sur WhatsApp.'));
+    if (d.billet_fichier) h += `<button class="gros or" type="button" data-a="billet">${T('Télécharger mon billet')}</button>`;
+  }
+  else if (p === 'declare') h += etat('att', '⏳', T('Paiement envoyé'), T("L'agence vérifie la réception et vous prévient sur WhatsApp."));
+  else if (!d.a_payer) h += etat('att', '⏳', T('Prix en cours de vérification'), T('Votre conseiller vérifie le prix et les places avec la compagnie. Vous recevrez le lien de paiement sur WhatsApp.'));
+  else {
+    h += `<div class="montant"><span>${T('Montant à payer')}</span><b data-no-t>${gnf(m)}</b>${d.nb_passagers > 1 ? `<small>${T('pour {n} passagers', { n: d.nb_passagers })}</small>` : ''}</div>`;
+    if (p === 'refuse') h += etat('non', '!', T('Référence non retrouvée'), T("Vérifiez le SMS d'Orange Money et renvoyez la bonne référence."));
+    if (p === 'en_cours') h += etat('att', '⏳', T('Paiement Orange Money en cours'), T('Si vous avez validé le paiement, touchez « Actualiser ».')) + `<button class="gros ghost" type="button" data-a="actualiser">${T('Actualiser')}</button>`;
+    const enLigne = INFOS.en_ligne && (!INFOS.plafond_en_ligne || m <= INFOS.plafond_en_ligne);
+    const guideOK = INFOS.om_numero || INFOS.om_code_marchand;
+    if (enLigne) h += `<button class="gros or" type="button" data-a="om">${T('Payer avec Orange Money')}</button><p class="note centre">${T("Page sécurisée d'Orange Money : vous validez avec votre code secret.")}</p>`;
+    if (guideOK) h += guide(m, enLigne);
+    if (!enLigne && !guideOK) h += `<p class="note centre">${T('Votre conseiller vous envoie les instructions de paiement sur WhatsApp.')}</p>
+      <a class="gros wa" href="${esc(wa(T('Bonjour VOYAGE FACILE, je souhaite payer ma demande {r}.', { r: d.reference })))}">${T('Écrire à VOYAGE FACILE')}</a>`;
+  }
+  $('#app').innerHTML = `<div class="carte">${entete(d)}<div class="corps">${h}<div class="err" id="errG" hidden></div></div></div>`;
+  brancher();
+}
+
+function erreurPage(msg){
+  $('#app').innerHTML = `<div class="carte"><div class="corps">${etat('non', '!', T('Lien de paiement'), msg)}
+    <a class="gros wa" href="${esc(wa(T("Bonjour VOYAGE FACILE, mon lien de paiement ne s'ouvre pas.")))}">${T('Écrire à VOYAGE FACILE')}</a></div></div>`;
+}
+
+async function charger(){
+  try {
+    const j = await api('suivi', { demandes: [{ cle: CLE }] });
+    D = (j.demandes || [])[0]; INFOS = j.paiement_infos || INFOS;
+    if (!D) throw new Error(T('Lien de paiement invalide ou incomplet. Écrivez-nous sur WhatsApp : nous vous renvoyons le bon lien.'));
+    afficher();
+  } catch(e){ erreurPage(e.message); }
+}
+
+async function copier(b){
+  const t = b.dataset.copie;
+  try { await navigator.clipboard.writeText(t); }
+  catch(e){ const x = document.createElement('textarea'); x.value = t; document.body.appendChild(x); x.select(); try { document.execCommand('copy'); } catch(_){} x.remove(); }
+  b.classList.add('ok'); b.textContent = T('Copié ✓'); setTimeout(() => { b.classList.remove('ok'); b.textContent = T('Copier'); }, 1800);
+}
+
+function brancher(){
+  document.querySelectorAll('[data-copie]').forEach(b => b.onclick = () => copier(b));
+  document.querySelectorAll('[data-a]').forEach(b => b.onclick = async () => {
+    const a = b.dataset.a;
+    if (a === 'jai-paye') { DECLARER = true; afficher(); const r = $('#ref'); if (r) r.focus(); return; }
+    if (a === 'autre-num') { $('#autreNum').hidden = !$('#autreNum').hidden; return; }
+    if (a === 'actualiser') { b.disabled = true; await charger(); return; }
+    b.disabled = true;
+    try {
+      if (a === 'om') { const j = await api('payer_om', { cle: CLE }); if (j.url) { window.location.href = j.url; return; } await charger(); }
+      if (a === 'billet') { const j = await api('billet', { cle: CLE }); window.location.href = j.url; b.disabled = false; }
+      if (a === 'envoyer') {
+        const ref = $('#ref').value.trim(), tel = ($('#tel') && $('#tel').value.trim()) || '';
+        if (!ref) throw new Error(T('Collez la référence reçue par SMS.'));
+        await api('declarer_paiement', { cle: CLE, transaction: ref, ...(tel ? { tel_payeur: tel } : {}) });
+        DECLARER = false; await charger();
+      }
+    } catch(e){
+      b.disabled = false;
+      const err = (a === 'envoyer' && $('#err')) || $('#errG');
+      if (err) { err.textContent = e.message; err.hidden = false; }
+    }
+  });
+}
+
+if (!CLE) erreurPage(T('Lien de paiement invalide ou incomplet. Écrivez-nous sur WhatsApp : nous vous renvoyons le bon lien.'));
+else {
+  if (PAYE) BANDEAU = etat('att', '⏳', T('Nous vérifions votre paiement'), T("Cela peut prendre quelques secondes."));
+  if (ANNULE) BANDEAU = etat('non', '!', T('Paiement annulé'), T('Vous pouvez réessayer ci-dessous.'));
+  charger().then(() => { if (PAYE) setTimeout(() => { BANDEAU = ''; charger(); }, 5000); });
+}
+</script>
+</body>
+</html>
