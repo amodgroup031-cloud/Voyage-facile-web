@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Suivre et payer ma demande – VOYAGE FACILE</title>
-<meta name="description" content="Suivez votre demande de billet VOYAGE FACILE et payez par Orange Money une fois le prix confirmé.">
+<meta name="description" content="Suivez votre demande VOYAGE FACILE (billet d'avion ou hôtel) et payez une fois le prix confirmé.">
 <link rel="icon" href="icone.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -39,14 +39,14 @@
 
 <main>
   <h1>Suivre et payer ma demande</h1>
-  <p class="sub">Une fois le prix confirmé par votre conseiller, vous payez ici par Orange Money.</p>
+  <p class="sub">Une fois le prix confirmé par votre conseiller, vous payez ici.</p>
   <div id="bandeau"></div>
   <div id="liste"></div>
   <form class="panel" id="fSuivi" style="margin-top:14px" novalidate>
     <h2 style="font-size:17px;margin-bottom:8px" id="fTitre">Retrouver une demande</h2>
     <div class="grid">
       <div><label for="ref">Référence de la demande</label><input id="ref" placeholder="VF-XXXXXX" autocapitalize="characters" autocomplete="off" required></div>
-      <div><label for="tel">Numéro WhatsApp utilisé</label><input id="tel" type="tel" inputmode="tel" placeholder="+224 6__ __ __ __" required></div>
+      <div><label for="tel">Numéro WhatsApp utilisé</label><input id="tel" type="tel" inputmode="tel" placeholder="+…" required></div>
     </div>
     <button class="btn btn-or w100" style="margin-top:12px" type="submit" id="bVoir">Voir ma demande</button>
     <div class="err" id="eSuivi" hidden></div>
@@ -62,6 +62,7 @@
 <script src="paiement.js"></script>
 <script src="corbeille.js"></script>
 <script src="options-voyage.js"></script>
+<script src="hotels.js"></script>
 <script>
 const C = window.VF_CONFIG;
 const API = C.SUPABASE_URL + "/functions/v1/vf-api";
@@ -74,6 +75,7 @@ const waLink = t => 'https://wa.me/' + C.AGENCE_WHATSAPP + '?text=' + encodeURIC
 function toast(t){ const el = $('#toast'); el.textContent = t; el.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => el.style.display = 'none', 3000); }
 $('#waTop').href = waLink(T("Bonjour VOYAGE FACILE, j'ai une question sur ma demande."));
 $('#waAide').href = waLink(T("Bonjour VOYAGE FACILE, j'ai besoin d'aide pour suivre ou payer ma demande."));
+if (window.Pays && Pays.exempleTel) $('#tel').placeholder = Pays.exempleTel();
 if (window.L) { $('#langTop').textContent = L.autre().toUpperCase(); $('#langTop').onclick = () => L.choisir(L.autre()); } else $('#langTop').hidden = true;
 
 async function api(action, data){
@@ -97,7 +99,7 @@ const LIB = { nouvelle:'Reçue', en_cours:'En vérification', confirmee:'Prix co
 const EXPL = {
   nouvelle: "Votre conseiller vérifie le prix et les places avec la compagnie. Ne payez rien pour l'instant.",
   en_cours: "Votre conseiller est en train de vérifier avec la compagnie. Ne payez rien pour l'instant.",
-  confirmee: "Le prix est confirmé : vous pouvez payer ci-dessous par Orange Money, ou en agence.",
+  confirmee: "Le prix est confirmé. Payez ci-dessous pour recevoir votre billet.",
   billet_envoye: "Votre billet vous a été envoyé sur WhatsApp. Bon voyage !",
   annulee: "Cette demande a été annulée. Écrivez-nous pour une nouvelle recherche."
 };
@@ -146,15 +148,18 @@ function afficher(){
   $('#liste').innerHTML = outils() + DEM.map(d => {
     const tel = (l.find(x => x.reference === d.reference) || {}).telephone || '';
     const e = ETAPES[d.statut] ?? 1;
-    const OV = window.OptionsVoyage, opt = OV && OV.est(d.type);
-    return `<div class="dcard" data-ref="${esc(d.reference)}"><div class="dtop"><div><b>${esc(d.trajet || '')}</b><div class="muted">${esc(T('Réf. {r}', { r: d.reference }))}</div></div><span class="pill st-${esc(d.statut)}">${esc(opt ? T(OV.libelle(d) || d.statut) : T(LIB[d.statut] || d.statut))}</span></div>
+    const OV = window.OptionsVoyage, opt = OV && OV.est(d.type), hot = d.type === 'hotel' && window.Hotels;
+    const lib = hot ? Hotels.libelle(d) : opt ? (OV.libelle(d) || d.statut) : (LIB[d.statut] || d.statut);
+    const expl = hot ? Hotels.explication(d) : opt ? (OV.explication(d) || '') : (EXPL[d.statut] || '');
+    const aConfirmer = !d.prix_confirme && !(d.prix_gnf > 0);
+    return `<div class="dcard" data-ref="${esc(d.reference)}"><div class="dtop"><div><b${hot ? ' data-no-t' : ''}>${esc(hot && d.hotel && d.hotel.nom ? d.hotel.nom + (d.hotel.ville ? ', ' + d.hotel.ville : '') : d.trajet || '')}</b><div class="muted">${esc(T('Réf. {r}', { r: d.reference }))}</div></div><span class="pill st-${esc(d.statut)}">${esc(T(lib))}</span></div>
       ${d.statut === 'annulee' ? '' : `<div class="steps4">${[1,2,3,4].map(k => `<i class="${k <= e ? 'on' : ''}"></i>`).join('')}</div>`}
-      <p class="muted" style="margin:6px 0">${esc(opt ? T(OV.explication(d) || '') : T(EXPL[d.statut] || ''))}</p>
-      ${OV ? OV.bloc(d, n => prix(n)) : ''}
-      <div class="r2"><span class="muted">${T(opt ? 'Frais de réservation' : d.prix_confirme ? (d.frais_payes_gnf ? 'Reste à payer' : 'Prix confirmé') : 'Prix indicatif')}</span><b>${prix(d.prix_gnf)}</b></div>
-      ${d.billet_ref ? `<div class="r2"><span class="muted">${T(opt ? 'Code de réservation' : 'Référence billet')}</span><b>${esc(d.billet_ref)}</b></div>` : ''}
-      ${d.billet_fichier ? `<button class="btn btn-or w100" type="button" style="margin-top:10px" data-billet="${esc(d.reference)}">📄 ${T(opt ? 'Télécharger ma réservation' : 'Télécharger mon billet')}</button>` : ''}
-      ${OV && OV.peutAcheter(d) ? `<a class="btn btn-navy w100" style="margin-top:10px" target="_blank" rel="noopener" href="${esc('https://wa.me/' + String(C.AGENCE_WHATSAPP).replace(/\D/g, '') + '?text=' + encodeURIComponent(OV.messageAcheter(d)))}">${esc(OV.libAcheter(d))}</a>` : ''}
+      <p class="muted" style="margin:6px 0">${esc(T(expl))}</p>
+      ${hot ? Hotels.resume(d, T) : OV ? OV.bloc(d, n => prix(n)) : ''}
+      <div class="r2"><span class="muted">${T(aConfirmer ? 'Prix' : opt ? 'Frais de réservation' : d.prix_confirme ? (d.frais_payes_gnf ? 'Reste à payer' : 'Prix confirmé') : 'Prix indicatif')}</span><b>${aConfirmer ? esc(T('À confirmer par votre conseiller')) : prix(d.prix_gnf)}</b></div>
+      ${d.billet_ref ? `<div class="r2"><span class="muted">${T(hot ? 'N° de confirmation' : opt ? 'Code de réservation' : 'Référence billet')}</span><b>${esc(d.billet_ref)}</b></div>` : ''}
+      ${d.billet_fichier ? `<button class="btn btn-or w100" type="button" style="margin-top:10px" data-billet="${esc(d.reference)}">📄 ${T(hot ? "Télécharger mon bon d'hôtel" : opt ? 'Télécharger ma réservation' : 'Télécharger mon billet')}</button>` : ''}
+      ${!hot && OV && OV.peutAcheter(d) ? `<a class="btn btn-navy w100" style="margin-top:10px" target="_blank" rel="noopener" href="${esc('https://wa.me/' + String(C.AGENCE_WHATSAPP).replace(/\D/g, '') + '?text=' + encodeURIComponent(OV.messageAcheter(d)))}">${esc(OV.libAcheter(d))}</a>` : ''}
       <div data-pay-box>${Paiement.html({ ...d, telephone: tel }, INFOS)}</div>
       ${CORB ? `<button class="vfc-lien" type="button" data-suppr="${esc(d.reference)}">${Corbeille.ICO.poubelle} ${T('Supprimer de mes demandes')}</button>`
         : `<button class="oubli" type="button" data-oubli="${esc(d.reference)}">${T('Ne plus afficher cette demande sur cet appareil')}</button>`}</div>`;
@@ -186,7 +191,7 @@ async function charger(){
 
 $('#fSuivi').addEventListener('submit', async e => {
   e.preventDefault(); $('#eSuivi').hidden = true;
-  const ref = $('#ref').value.trim().toUpperCase(), tel = $('#tel').value.trim();
+  const ref = $('#ref').value.trim().toUpperCase(), tel = window.Pays && Pays.telInternational ? Pays.telInternational($('#tel').value) : $('#tel').value.trim();
   if (!/^VF-[A-Z0-9]{6}$/.test(ref)) { $('#eSuivi').textContent = T('Indiquez la référence reçue (ex. VF-K7P3QX).'); $('#eSuivi').hidden = false; return; }
   if (!tel) { $('#eSuivi').textContent = T('Indiquez le numéro WhatsApp utilisé pour la demande.'); $('#eSuivi').hidden = false; return; }
   $('#bVoir').disabled = true;

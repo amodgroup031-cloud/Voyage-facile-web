@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Payer mon billet – VOYAGE FACILE</title>
+<title>Payer ma réservation – VOYAGE FACILE</title>
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#0b2545">
 <link rel="icon" href="icone.png">
@@ -118,8 +118,10 @@ const ligne = (nom, valeur, copie) => `<div class="ligne"><span>${esc(nom)}</spa
 function entete(d){
   const trajet = d.de && d.vers ? `${ville(d.de)} → ${ville(d.vers)}` : String(d.trajet || '').replace(/\s*\((aller-retour|aller simple)\)/, '');
   const dates = d.depart ? dateLongue(d.depart) + (d.retour ? ' – ' + dateLongue(d.retour) : '') : '';
-  return `<div class="voyage"><span class="etiq">${T(d.retour ? 'Votre voyage aller-retour' : 'Votre voyage')}</span>
-    <b class="trajet" data-no-t>${esc(trajet)}</b>
+  const hot = d.type === 'hotel';
+  const titre = hot && d.hotel ? (d.hotel.nom ? d.hotel.nom + (d.hotel.ville ? ', ' + d.hotel.ville : '') : T('Hôtel à {v}', { v: d.hotel.ville || '' })) : trajet;
+  return `<div class="voyage"><span class="etiq">${T(hot ? 'Votre hôtel' : d.retour ? 'Votre voyage aller-retour' : 'Votre voyage')}</span>
+    <b class="trajet" data-no-t>${esc(titre)}</b>
     ${dates ? `<span data-no-t>${esc(dates)}</span>` : ''}
     ${(d.prenoms || []).length ? `<span data-no-t>${esc(d.prenoms.join(', '))}</span>` : ''}
     <span class="ref">${T('Référence')} <b data-no-t>${esc(d.reference)}</b></span></div>`;
@@ -140,7 +142,7 @@ function guide(m, enLigne){
   else h += `<label for="ref">${T('Collez la référence reçue par SMS')}</label>
     <input id="ref" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="MP261128.1530.A12345">
     <button class="lien" type="button" data-a="autre-num">${T('Payé depuis un autre numéro ?')}</button>
-    <div id="autreNum" hidden><label for="tel">${T('Numéro Orange Money qui a payé')}</label><input id="tel" type="tel" inputmode="tel" placeholder="+224 6__ __ __ __"></div>
+    <div id="autreNum" hidden><label for="tel">${T('Numéro Orange Money qui a payé')}</label><input id="tel" type="tel" inputmode="tel" placeholder="${esc(window.Pays && Pays.exempleTel ? Pays.exempleTel() : '+224 6__ __ __ __')}"></div>
     <button class="gros vert" type="button" data-a="envoyer">${T('Envoyer la référence')}</button><div class="err" id="err" hidden></div>`;
   h += `</div></div>`;
   return h + (enLigne ? '</details>' : '');
@@ -151,13 +153,14 @@ function afficher(){
   let h = BANDEAU;
   if (d.statut === 'annulee') h += etat('non', '✕', T('Cette demande est annulée.'), T('Pour toute question, écrivez-nous sur WhatsApp.'));
   else if (p === 'recu') {
-    const opt = d.type === 'visa' || d.type === 'blocage';
-    h += etat('ok', '✅', T('Paiement reçu, merci !'), opt ? T(d.billet_fichier ? 'Votre réservation est prête.' : 'Votre réservation arrive très bientôt sur WhatsApp.')
+    const opt = d.type === 'visa' || d.type === 'blocage', hot = d.type === 'hotel';
+    h += etat('ok', '✅', T('Paiement reçu, merci !'), hot ? T(d.billet_fichier ? "Votre réservation d'hôtel est confirmée." : "Nous réservons votre chambre : votre bon d'hôtel arrive très bientôt sur WhatsApp.")
+      : opt ? T(d.billet_fichier ? 'Votre réservation est prête.' : 'Votre réservation arrive très bientôt sur WhatsApp.')
       : d.billet_fichier ? T('Votre billet est prêt.') : T('Votre billet arrive très bientôt sur WhatsApp.'));
-    if (d.billet_fichier) h += `<button class="gros or" type="button" data-a="billet">${T(opt ? 'Télécharger ma réservation' : 'Télécharger mon billet')}</button>`;
+    if (d.billet_fichier) h += `<button class="gros or" type="button" data-a="billet">${T(hot ? "Télécharger mon bon d'hôtel" : opt ? 'Télécharger ma réservation' : 'Télécharger mon billet')}</button>`;
   }
   else if (p === 'declare') h += etat('att', '⏳', T('Paiement envoyé'), T("L'agence vérifie la réception et vous prévient sur WhatsApp."));
-  else if (!d.a_payer) h += etat('att', '⏳', T('Prix en cours de vérification'), T('Votre conseiller vérifie le prix et les places avec la compagnie. Vous recevrez le lien de paiement sur WhatsApp.'));
+  else if (!d.a_payer) h += etat('att', '⏳', T('Prix en cours de vérification'), T(d.type === 'hotel' ? "Votre conseiller vérifie la disponibilité et le prix avec l'hôtel. Vous recevrez le lien de paiement sur WhatsApp." : 'Votre conseiller vérifie le prix et les places avec la compagnie. Vous recevrez le lien de paiement sur WhatsApp.'));
   else {
     const libM = d.type === 'visa' ? 'Frais de réservation pour visa' : d.type === 'blocage' ? 'Frais pour bloquer le prix' : 'Montant à payer';
     h += `<div class="montant"><span>${T(libM)}</span><b data-no-t>${gnf(m)}</b>${d.type === 'visa' || d.type === 'blocage' ? `<small>${T('Déduits du billet si vous l\'achetez ensuite')}</small>` : d.frais_payes_gnf ? `<small>${T('Frais de réservation déjà déduits : {f}', { f: gnf(d.frais_payes_gnf) })}</small>` : d.nb_passagers > 1 ? `<small>${T('pour {n} passagers', { n: d.nb_passagers })}</small>` : ''}</div>`;

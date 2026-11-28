@@ -23,15 +23,20 @@
 
   const estOption = d => d.type === 'visa' || d.type === 'blocage';
   function html(d){
-    const joint = !!d.billet_fichier, opt = estOption(d), doc = opt ? 'réservation' : 'billet';
-    return `<b>${opt ? 'Document de réservation pour le client' : 'Billet électronique pour le client'}</b>
+    const joint = !!d.billet_fichier, opt = estOption(d), hot = d.type === 'hotel';
+    const L = hot ? { titre: "Bon d'hôtel pour le client", joint: "Bon d'hôtel joint", doc: "bon d'hôtel", voir: "Voir le bon d'hôtel joint", rempl: "Remplacer le bon d'hôtel", joindre: "📎 Joindre le bon d'hôtel (PDF ou photo)",
+        aide: "Après avoir réservé la chambre, joignez ici le bon d'hôtel (PDF ou photo) et le n° de confirmation ci-dessous. Le client le reçoit dans son application, rubrique « Mes voyages », et la demande passe à « Hôtel réservé »." }
+      : opt ? { titre: 'Document de réservation pour le client', joint: 'Réservation jointe', doc: 'réservation', voir: 'Voir la réservation jointe', rempl: 'Remplacer la réservation', joindre: '📎 Joindre la réservation (PDF ou photo)',
+        aide: "Après avoir posé l'option avec la compagnie (sans émettre le billet), joignez ici la réservation (PDF ou photo) avec le code et la date limite ci-dessous. Le client la reçoit dans son application et la demande passe à « Réservation prête »." }
+      : { titre: 'Billet électronique pour le client', joint: 'Billet joint', doc: 'billet', voir: 'Voir le billet joint', rempl: 'Remplacer le billet', joindre: '📎 Joindre le billet (PDF ou photo)',
+        aide: "Après la confirmation avec la compagnie, joignez ici le billet (PDF ou photo). Le client le reçoit dans son application, rubrique « Mes voyages », et la demande passe à « Billet envoyé »." };
+    return `<b>${L.titre}</b>
       ${joint
-        ? `<div class="ok" style="margin-top:8px">📄 ${opt ? 'Réservation jointe' : 'Billet joint'} : <b>${esc(d.billet_fichier_nom || doc)}</b>${d.billet_fichier_maj ? ' · ' + esc(quand(d.billet_fichier_maj)) : ''}<br>Le client la télécharge dans « Mes voyages ».</div>
-           <div class="cards" style="margin-top:8px"><button class="btn btn-ghost" type="button" data-bf="voir">${opt ? 'Voir la réservation jointe' : 'Voir le billet joint'}</button>
+        ? `<div class="ok" style="margin-top:8px">📄 ${L.joint} : <b>${esc(d.billet_fichier_nom || L.doc)}</b>${d.billet_fichier_maj ? ' · ' + esc(quand(d.billet_fichier_maj)) : ''}<br>Le client le télécharge dans « Mes voyages ».</div>
+           <div class="cards" style="margin-top:8px"><button class="btn btn-ghost" type="button" data-bf="voir">${L.voir}</button>
            <button class="btn btn-wa" type="button" data-bf="wa">Prévenir le client sur WhatsApp</button></div>`
-        : opt ? `<p class="muted" style="margin:6px 0 4px">Après avoir posé l'option avec la compagnie (sans émettre le billet), joignez ici la réservation (PDF ou photo) avec le code et la date limite ci-dessous. Le client la reçoit dans son application et la demande passe à « Réservation prête ».</p>`
-        : `<p class="muted" style="margin:6px 0 4px">Après la confirmation avec la compagnie, joignez ici le billet (PDF ou photo). Le client le reçoit dans son application, rubrique « Mes voyages », et la demande passe à « Billet envoyé ».</p>`}
-      <label class="btn ${joint ? 'btn-ghost' : 'btn-or'} w100" style="margin-top:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;text-transform:none;letter-spacing:0;font-size:15px;font-weight:700">${joint ? (opt ? 'Remplacer la réservation' : 'Remplacer le billet') : (opt ? '📎 Joindre la réservation (PDF ou photo)' : '📎 Joindre le billet (PDF ou photo)')}<input type="file" data-bf="fichier" accept="application/pdf,image/jpeg,image/png,image/webp" hidden></label>
+        : `<p class="muted" style="margin:6px 0 4px">${L.aide}</p>`}
+      <label class="btn ${joint ? 'btn-ghost' : 'btn-or'} w100" style="margin-top:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;text-transform:none;letter-spacing:0;font-size:15px;font-weight:700">${joint ? L.rempl : L.joindre}<input type="file" data-bf="fichier" accept="application/pdf,image/jpeg,image/png,image/webp" hidden></label>
       <div class="muted" data-bf="etat" style="margin-top:6px" role="status"></div>`;
   }
 
@@ -48,7 +53,7 @@
       if (!ext) { etat('Choisissez un fichier PDF ou une photo (JPG, PNG).'); return; }
       if (f.size > MAX) { etat('Fichier trop lourd : 10 Mo au maximum.'); return; }
       const chemin = `${d.id}/${Date.now()}.${ext}`;
-      input.disabled = true; etat(estOption(d) ? 'Envoi de la réservation…' : 'Envoi du billet…');
+      input.disabled = true; etat(d.type === 'hotel' ? "Envoi du bon d'hôtel…" : estOption(d) ? 'Envoi de la réservation…' : 'Envoi du billet…');
       try {
         const up = await ctx.sb.storage.from('billets').upload(chemin, f, { contentType: f.type, upsert: false });
         if (up.error) throw up.error;
@@ -61,7 +66,7 @@
         const ancien = d.billet_fichier;
         Object.assign(d, maj);
         if (ancien && ancien !== chemin) ctx.sb.storage.from('billets').remove([ancien]).catch(() => {});
-        ctx.toast(estOption(d) ? 'Réservation envoyée dans l\'application du client ✅' : 'Billet envoyé dans l\'application du client ✅');
+        ctx.toast(d.type === 'hotel' ? 'Bon d\'hôtel envoyé dans l\'application du client ✅' : estOption(d) ? 'Réservation envoyée dans l\'application du client ✅' : 'Billet envoyé dans l\'application du client ✅');
         monter(racine, d, ctx);
         if (ctx.apres) ctx.apres(d);
         ctx.ouvrir(waClient(d.telephone, message(d, ctx.site, d.billet_ref || ref)));   // message prêt : il suffit d'appuyer sur « Envoyer »

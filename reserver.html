@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Réserver un billet d'avion – VOYAGE FACILE</title>
-<meta name="description" content="Cherchez votre vol au départ de Conakry, voyez le prix en GNF et réservez avec VOYAGE FACILE. Partez sans souci.">
+<meta name="description" content="Cherchez votre vol partout dans le monde, voyez le prix dans votre monnaie et réservez avec VOYAGE FACILE. Partez sans souci.">
 <link rel="icon" href="icone.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -79,7 +79,7 @@
         <label><input type="radio" name="trip" value="as"> Aller simple</label>
       </div>
       <div class="grid">
-        <div class="ac"><label for="from">Départ</label><input id="from" autocomplete="off" value="Conakry (CKY)" data-code="CKY" required><ul id="fromList" role="listbox" hidden></ul></div>
+        <div class="ac"><label for="from">Départ</label><input id="from" autocomplete="off" placeholder="Ville ou aéroport" required><ul id="fromList" role="listbox" hidden></ul></div>
         <div class="ac"><label for="to">Destination</label><input id="to" autocomplete="off" placeholder="Ville ou aéroport" required><ul id="toList" role="listbox" hidden></ul></div>
         <div><label for="d1">Départ le</label><input id="d1" type="date" required></div>
         <div id="d2box"><label for="d2">Retour le</label><input id="d2" type="date"></div>
@@ -106,7 +106,7 @@
       <div id="transitBox"></div>
       <div id="paxList"></div>
       <div class="grid">
-        <div><label for="tel">Votre numéro WhatsApp</label><input id="tel" type="tel" inputmode="tel" placeholder="+224 6__ __ __ __" required></div>
+        <div><label for="tel">Votre numéro WhatsApp</label><input id="tel" type="tel" inputmode="tel" placeholder="+…" required></div>
         <div><label for="mail">E-mail (facultatif)</label><input id="mail" type="email" inputmode="email"></div>
       </div>
       <div style="margin-top:12px"><label for="msg">Message pour l'agence (facultatif)</label><textarea id="msg" rows="2" maxlength="500" placeholder="Bagages, siège, besoin particulier…"></textarea></div>
@@ -371,6 +371,7 @@ $('#fPax').addEventListener('submit', async e => {
     passagers.push({ civilite: civ.value, prenom, nom, naissance });
   }
   if(!$('#tel').value.trim()) return fail('Indiquez votre numéro WhatsApp.');
+  if (window.Pays && Pays.telInternational) $('#tel').value = Pays.telInternational($('#tel').value);   // indicatif du pays ajouté s'il manque
   const vt = $('#transitBox [data-vt="ok"]');
   if (vt && !vt.checked) return fail('Visa de transit : cochez la case si vous avez ce visa, sinon choisissez un autre vol.');
   if(!$('#ok').checked) return fail('Cochez la case pour confirmer votre demande.');
@@ -400,6 +401,17 @@ if(q.get('d1')) $('#d1').value = q.get('d1');
 if(q.get('d2')) $('#d2').value = q.get('d2');
 if(q.get('trip')==='as'){ document.querySelector('input[value=as]').checked = true; $('#d2box').hidden = true; }
 if(q.get('ad')) { const n = Math.min(9, Math.max(1, parseInt(q.get('ad')) || 1)); $('#ad').value = String(n); }
+// Ville de départ : celle du visiteur (pays reconnu par son appareil), ou celle choisie sur l'accueil.
+const ORIG = window.Pays && Pays.aeroport ? Pays.aeroport() : null;
+if (ORIG && !q.get('from')) { $('#from').value = `${ORIG.ville} (${ORIG.code})`; $('#from').dataset.code = ORIG.code; }
+if (window.Pays && Pays.exempleTel) $('#tel').placeholder = Pays.exempleTel();
+if(q.get('from')) {
+  $('#from').value = q.get('from');
+  api('aeroports', { q: q.get('from') }).then(j => {
+    const a = (j.aeroports || [])[0];
+    if (a && !$('#from').dataset.code) { $('#from').value = `${a.ville} (${a.code})`; $('#from').dataset.code = a.code; }
+  }).catch(() => {});
+}
 if(q.get('to')) {
   $('#to').value = q.get('to');
   // On retrouve l'aéroport tout seul : le client n'a plus qu'à appuyer sur « Rechercher ».

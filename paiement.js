@@ -33,17 +33,20 @@
   // v : voyage tel que renvoyé par « suivi » ; infos : paiement_infos (coordonnées Orange Money de l'agence)
   function html(v, infos){
     const p = v && v.paiement; if (!p) return '';
-    if (p.statut === 'recu') return `<div class="pay"><div class="pay-etat ok">✅ <b>${T('Paiement reçu')}</b>${p.mode === 'agence' ? T(' en agence') : ''}${p.ref ? T(' · réf. {r}', { r: esc(p.ref) }) : ''}.<br>${v.type === 'visa' || v.type === 'blocage' ? T(v.statut === 'billet_envoye' ? 'Merci ! Votre réservation est prête.' : 'Votre réservation est en préparation.') : v.statut === 'billet_envoye' ? T('Merci, bon voyage !') : T('Votre billet est en préparation.')}</div></div>`;
+    if (p.statut === 'recu') return `<div class="pay"><div class="pay-etat ok">✅ <b>${T('Paiement reçu')}</b>${p.mode === 'agence' ? T(' en agence') : ''}${p.ref ? T(' · réf. {r}', { r: esc(p.ref) }) : ''}.<br>${v.type === 'hotel' ? T(v.statut === 'billet_envoye' ? "Merci ! Votre réservation d'hôtel est confirmée." : "Votre réservation d'hôtel est en cours.") : v.type === 'visa' || v.type === 'blocage' ? T(v.statut === 'billet_envoye' ? 'Merci ! Votre réservation est prête.' : 'Votre réservation est en préparation.') : v.statut === 'billet_envoye' ? T('Merci, bon voyage !') : T('Votre billet est en préparation.')}</div></div>`;
     if (p.statut === 'declare') return `<div class="pay"><div class="pay-etat att">⏳ <b>${T('Paiement déclaré')}</b> ${T('(réf. {r}).', { r: esc(p.ref) })}<br>${T("L'agence vérifie la réception sur son compte Orange Money. Vous serez prévenu sur WhatsApp.")}</div></div>`;
     if (!v.a_payer) return '';
     const montant = p.montant_gnf || v.prix_gnf;
     const i = infos || {};
     const enLigne = i.en_ligne && (!i.plafond_en_ligne || montant <= i.plafond_en_ligne);
+    // Client hors de Guinée : Orange Money Guinée n'est pas pour lui ; un proche peut payer, ou le conseiller propose un autre moyen.
+    const horsGuinee = !v.proche && !!(window.Pays && Pays.code && Pays.code !== 'GN');
     let h = `<div class="pay"><h4>Payer avec Orange Money</h4>`;
+    if (horsGuinee) h = `<div class="pay"><h4>${T('Payer')}</h4><div class="pay-etat att">${T("Vous n'êtes pas en Guinée ? Touchez « Faire payer un proche » pour qu'une personne en Guinée paie avec Orange Money, ou écrivez à votre conseiller sur WhatsApp : il vous indique les autres moyens de paiement possibles depuis votre pays.")}</div>`;
     if (p.statut === 'refuse') h += `<div class="pay-etat non">La référence envoyée n'a pas été retrouvée par l'agence. Vérifiez le SMS d'Orange Money et renvoyez-la, ou écrivez-nous.</div>`;
     if (p.statut === 'en_cours') h += `<div class="pay-etat att">⏳ Paiement Orange Money en cours. Si vous l'avez validé, touchez « Actualiser ».</div><button class="pay-btn pay-ghost" type="button" data-pay="actualiser">Actualiser</button>`;
     h += `<div class="pay-montant"><span>Montant à payer</span><b>${prix(montant)}</b></div>`;
-    if (enLigne) h += `<button class="pay-btn pay-om" type="button" data-pay="om">${p.statut === 'en_cours' ? 'Reprendre le paiement Orange Money' : 'Payer avec Orange Money'}</button>
+    if (enLigne) h += `${horsGuinee ? `<div class="pay-note" style="margin:8px 0 0">${T('Avec un compte Orange Money Guinée :')}</div>` : ''}<button class="pay-btn pay-om" type="button" data-pay="om">${p.statut === 'en_cours' ? 'Reprendre le paiement Orange Money' : 'Payer avec Orange Money'}</button>
       <div class="pay-note">Page sécurisée d'Orange Money : vous validez avec votre code secret sur votre téléphone.</div>`;
     const guide = i.om_numero || i.om_code_marchand;
     if (guide) {
@@ -51,19 +54,19 @@
       const etape1 = i.om_code_marchand
         ? T('Composez {a} (paiement marchand), entrez le code marchand {c} et le montant {m}.', { a: num('*144*6#'), c: num(esc(i.om_code_marchand)), m: num(gnf(montant)) })
         : T("Composez {a}, choisissez « Transfert d'argent » et envoyez {m} au {n}{t}.", { a: num('*144#'), m: num(gnf(montant)), n: num(esc(telAff(i.om_numero))), t: i.om_titulaire ? ` (${esc(i.om_titulaire)})` : '' });
-      h += `<details${enLigne ? '' : ' open'}><summary>${enLigne ? 'Ou payer avec le code *144#' : 'Comment payer'}</summary>
+      h += `<details${enLigne || horsGuinee ? '' : ' open'}><summary>${enLigne ? 'Ou payer avec le code *144#' : horsGuinee ? T('Payer avec Orange Money Guinée') : 'Comment payer'}</summary>
         <ol><li>${etape1}<a class="pay-btn pay-ghost" href="tel:${i.om_code_marchand ? '*144*6%23' : '*144%23'}">${T('Ouvrir {c} sur le téléphone', { c: i.om_code_marchand ? '*144*6#' : '*144#' })}</a></li>
         <li>${T("Validez avec {v} code secret. Ne le donnez à personne, même pas à l'agence.", { v: '<b>' + T('votre') + '</b>' })}</li>
         <li>Recopiez ici la référence de transaction reçue par SMS d'Orange Money :</li></ol>
         <label for="payRef-${esc(v.reference)}">Référence du SMS Orange Money</label><input id="payRef-${esc(v.reference)}" data-pay-ref autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ex. MP261127.1530.A12345">
-        <label for="payTel-${esc(v.reference)}">${v.proche ? 'Votre numéro Orange Money (celui qui a payé)' : 'Numéro qui a payé (si différent du vôtre)'}</label><input class="tel" id="payTel-${esc(v.reference)}" data-pay-tel type="tel" inputmode="tel" placeholder="+224 6__ __ __ __">
+        <label for="payTel-${esc(v.reference)}">${v.proche ? 'Votre numéro Orange Money (celui qui a payé)' : 'Numéro qui a payé (si différent du vôtre)'}</label><input class="tel" id="payTel-${esc(v.reference)}" data-pay-tel type="tel" inputmode="tel" placeholder="${esc(window.Pays && Pays.exempleTel ? Pays.exempleTel() : '+224 6__ __ __ __')}">
         <button class="pay-btn pay-ok-btn" type="button" data-pay="declarer">J'ai payé : envoyer la référence</button>
         <div class="pay-err" data-pay-err hidden></div>
         <div class="pay-note">Montant élevé ? Vous pouvez payer en plusieurs fois : mettez toutes les références, séparées par un espace.</div></details>`;
     } else if (!enLigne) {
       h += `<div class="pay-note">Votre conseiller vous indique comment payer sur WhatsApp (Orange Money ou en agence).</div>`;
     }
-    h += `<div class="pay-note">Vous pouvez aussi payer directement en agence.</div></div>`;
+    h += horsGuinee ? '</div>' : `<div class="pay-note">Vous pouvez aussi payer directement en agence.</div></div>`;
     return h;
   }
 

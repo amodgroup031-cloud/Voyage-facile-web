@@ -10,17 +10,32 @@
     GNF:'Franc guinéen', XOF:'Franc CFA (Afrique de l\'Ouest)', XAF:'Franc CFA (Afrique centrale)', EUR:'Euro', USD:'Dollar américain',
     GBP:'Livre sterling', CAD:'Dollar canadien', CHF:'Franc suisse', MAD:'Dirham marocain', DZD:'Dinar algérien', TND:'Dinar tunisien',
     EGP:'Livre égyptienne', NGN:'Naira', GHS:'Cedi', SLE:'Leone', LRD:'Dollar libérien', GMD:'Dalasi', MRU:'Ouguiya', CVE:'Escudo cap-verdien',
-    AED:'Dirham des Émirats', SAR:'Riyal saoudien', QAR:'Riyal qatari', TRY:'Livre turque', CNY:'Yuan', INR:'Roupie indienne', RUB:'Rouble'
+    AED:'Dirham des Émirats', SAR:'Riyal saoudien', QAR:'Riyal qatari', TRY:'Livre turque', CNY:'Yuan', INR:'Roupie indienne', RUB:'Rouble',
+    JPY:'Yen', KRW:'Won sud-coréen', AUD:'Dollar australien', NZD:'Dollar néo-zélandais', BRL:'Réal brésilien', MXN:'Peso mexicain',
+    ZAR:'Rand sud-africain', KES:'Shilling kényan', ETB:'Birr éthiopien', RWF:'Franc rwandais', UGX:'Shilling ougandais', TZS:'Shilling tanzanien',
+    CDF:'Franc congolais', AOA:'Kwanza', MUR:'Roupie mauricienne', SEK:'Couronne suédoise', NOK:'Couronne norvégienne', DKK:'Couronne danoise',
+    PLN:'Złoty', CZK:'Couronne tchèque', HUF:'Forint', RON:'Leu roumain', ILS:'Shekel', KWD:'Dinar koweïtien', BHD:'Dinar bahreïni',
+    OMR:'Rial omanais', JOD:'Dinar jordanien', PKR:'Roupie pakistanaise', BDT:'Taka', IDR:'Roupie indonésienne', MYR:'Ringgit',
+    SGD:'Dollar de Singapour', THB:'Baht', PHP:'Peso philippin', VND:'Dông', HKD:'Dollar de Hong Kong', ARS:'Peso argentin',
+    CLP:'Peso chilien', COP:'Peso colombien', PEN:'Sol péruvien', HTG:'Gourde'
   };
   const NOMS_EN = {
     GNF:'Guinean franc', XOF:'CFA franc (West Africa)', XAF:'CFA franc (Central Africa)', EUR:'Euro', USD:'US dollar', GBP:'Pound sterling',
     CAD:'Canadian dollar', CHF:'Swiss franc', MAD:'Moroccan dirham', DZD:'Algerian dinar', TND:'Tunisian dinar', EGP:'Egyptian pound', NGN:'Naira',
     GHS:'Cedi', SLE:'Leone', LRD:'Liberian dollar', GMD:'Dalasi', MRU:'Ouguiya', CVE:'Cape Verdean escudo', AED:'UAE dirham', SAR:'Saudi riyal',
-    QAR:'Qatari riyal', TRY:'Turkish lira', CNY:'Yuan', INR:'Indian rupee', RUB:'Ruble'
+    QAR:'Qatari riyal', TRY:'Turkish lira', CNY:'Yuan', INR:'Indian rupee', RUB:'Ruble',
+    JPY:'Japanese yen', KRW:'South Korean won', AUD:'Australian dollar', NZD:'New Zealand dollar', BRL:'Brazilian real', MXN:'Mexican peso',
+    ZAR:'South African rand', KES:'Kenyan shilling', ETB:'Ethiopian birr', RWF:'Rwandan franc', UGX:'Ugandan shilling', TZS:'Tanzanian shilling',
+    CDF:'Congolese franc', AOA:'Kwanza', MUR:'Mauritian rupee', SEK:'Swedish krona', NOK:'Norwegian krone', DKK:'Danish krone',
+    PLN:'Polish złoty', CZK:'Czech koruna', HUF:'Hungarian forint', RON:'Romanian leu', ILS:'Israeli shekel', KWD:'Kuwaiti dinar', BHD:'Bahraini dinar',
+    OMR:'Omani rial', JOD:'Jordanian dinar', PKR:'Pakistani rupee', BDT:'Bangladeshi taka', IDR:'Indonesian rupiah', MYR:'Malaysian ringgit',
+    SGD:'Singapore dollar', THB:'Thai baht', PHP:'Philippine peso', VND:'Vietnamese dong', HKD:'Hong Kong dollar', ARS:'Argentine peso',
+    CLP:'Chilean peso', COP:'Colombian peso', PEN:'Peruvian sol', HTG:'Haitian gourde'
   };
   const EN = () => !!(window.L && window.L.code === 'en');
   const LOC = () => (window.L && window.L.loc) || 'fr-FR';
-  const SANS_DECIMALES = new Set(['GNF','XOF','XAF','NGN','SLE','LRD','GMD','MRU','CVE','DZD','INR','RUB','EGP']);
+  const SANS_DECIMALES = new Set(['GNF','XOF','XAF','NGN','SLE','LRD','GMD','MRU','CVE','DZD','INR','RUB','EGP','JPY','KRW','IDR','VND','UGX','TZS',
+    'RWF','CDF','CLP','COP','HUF','PKR','ARS','KES','AOA','BDT']);
   const FUSEAUX = {
     'Africa/Conakry':'GNF', 'Africa/Dakar':'XOF', 'Africa/Abidjan':'XOF', 'Africa/Bamako':'XOF', 'Africa/Ouagadougou':'XOF', 'Africa/Niamey':'XOF',
     'Africa/Lome':'XOF', 'Africa/Porto-Novo':'XOF', 'Africa/Bissau':'XOF', 'Africa/Douala':'XAF', 'Africa/Libreville':'XAF', 'Africa/Brazzaville':'XAF',
@@ -34,17 +49,24 @@
     'Ljubljana','Tallinn','Riga','Vilnius','Monaco','Malta','Zagreb','Andorra','San_Marino','Vatican','Busingen','Nicosia'];
   const CANADA = ['Toronto','Vancouver','Montreal','Edmonton','Winnipeg','Halifax','Regina','St_Johns','Moncton','Whitehorse','Iqaluit'];
   const REGIONS = { GN:'GNF', SN:'XOF', CI:'XOF', ML:'XOF', BF:'XOF', NE:'XOF', TG:'XOF', BJ:'XOF', GW:'XOF', CM:'XAF', GA:'XAF', CG:'XAF',
-    SL:'SLE', LR:'LRD', GM:'GMD', MR:'MRU', MA:'MAD', DZ:'DZD', TN:'TND', EG:'EGP', NG:'NGN', GH:'GHS', FR:'EUR', BE:'EUR', DE:'EUR', ES:'EUR',
-    IT:'EUR', PT:'EUR', NL:'EUR', LU:'EUR', GB:'GBP', CH:'CHF', US:'USD', CA:'CAD', AE:'AED', SA:'SAR', QA:'QAR', TR:'TRY', CN:'CNY', IN:'INR', RU:'RUB' };
+    CF:'XAF', TD:'XAF', GQ:'XAF', CV:'CVE', SL:'SLE', LR:'LRD', GM:'GMD', MR:'MRU', MA:'MAD', DZ:'DZD', TN:'TND', EG:'EGP', NG:'NGN', GH:'GHS',
+    KE:'KES', ET:'ETB', RW:'RWF', UG:'UGX', TZ:'TZS', CD:'CDF', AO:'AOA', MU:'MUR', ZA:'ZAR', RE:'EUR', YT:'EUR', GP:'EUR', MQ:'EUR', GF:'EUR',
+    FR:'EUR', BE:'EUR', DE:'EUR', ES:'EUR', IT:'EUR', PT:'EUR', NL:'EUR', LU:'EUR', IE:'EUR', AT:'EUR', FI:'EUR', GR:'EUR', MC:'EUR', MT:'EUR', CY:'EUR',
+    SK:'EUR', SI:'EUR', EE:'EUR', LV:'EUR', LT:'EUR', HR:'EUR', AD:'EUR', GB:'GBP', CH:'CHF', SE:'SEK', NO:'NOK', DK:'DKK', PL:'PLN', CZ:'CZK',
+    HU:'HUF', RO:'RON', US:'USD', PR:'USD', EC:'USD', PA:'USD', CA:'CAD', MX:'MXN', BR:'BRL', AR:'ARS', CL:'CLP', CO:'COP', PE:'PEN', HT:'HTG',
+    AE:'AED', SA:'SAR', QA:'QAR', KW:'KWD', BH:'BHD', OM:'OMR', JO:'JOD', IL:'ILS', TR:'TRY', CN:'CNY', HK:'HKD', IN:'INR', PK:'PKR', BD:'BDT',
+    RU:'RUB', JP:'JPY', KR:'KRW', ID:'IDR', MY:'MYR', SG:'SGD', TH:'THB', PH:'PHP', VN:'VND', AU:'AUD', NZ:'NZD' };
 
   function detecter(){
     let tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch(e){}
     if (FUSEAUX[tz]) return FUSEAUX[tz];
     const ville = tz.split('/')[1] || '';
     if (tz.startsWith('Europe/') && EURO.includes(ville)) return 'EUR';
+    // Pays reconnu (fuseau horaire ou langue du téléphone), puis dollar américain partout ailleurs.
+    if (window.Pays && Pays.code && REGIONS[Pays.code]) return REGIONS[Pays.code];
     if (tz.startsWith('America/')) return CANADA.includes(ville) ? 'CAD' : 'USD';
     const region = String((navigator.languages && navigator.languages[0]) || navigator.language || '').split('-')[1];
-    return REGIONS[String(region || '').toUpperCase()] || 'GNF';
+    return REGIONS[String(region || '').toUpperCase()] || 'USD';
   }
 
   const lire = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e){ return d; } };

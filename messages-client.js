@@ -31,7 +31,14 @@
   // Lien déjà connu, sinon la page de suivi (le client y tape alors son numéro).
   const lienConnu = d => connus[d.id] || `${SITE}/suivi.html?ref=${encodeURIComponent(d.id)}`;
 
+  // Hôtel : nom, ville et dates du séjour (« Hôtel Lumière, Paris — du 10 mars au 13 mars (3 nuits) »)
+  function sejour(d){
+    const o = d.offre || {}, s = o.sejour || {};
+    const nom = o.hotel ? (/^h[oô]tel/i.test(o.hotel.nom || '') ? o.hotel.nom : 'Hôtel ' + o.hotel.nom) + (o.hotel.ville ? ', ' + o.hotel.ville : '') : `Hôtel à ${o.lieu || ''}`;
+    return `${nom} — du ${jour(s.arrivee)} au ${jour(s.depart)} (${s.nuits} nuit${s.nuits > 1 ? 's' : ''})`;
+  }
   function voyage(d){
+    if (d.type === 'hotel') return sejour(d);
     const o = d.offre || {}, a = o.aller, r = o.retour;
     if (!a) return `Votre vol ${d.trajet || ''}`.trim();
     const t = `${ville(a.depart_aeroport)} → ${ville(a.arrivee_aeroport)}`;
@@ -41,6 +48,8 @@
 
   const dateLimite = iso => { const t = new Date(iso); return isNaN(t) ? '' : t.toLocaleString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }); };
   function prix(d, montant, url){
+    if (d.type === 'hotel') return `Bonjour, ici VOYAGE FACILE 🏨\nBonne nouvelle : votre chambre est disponible.\n${voyage(d)}\nPrix total : ${gnf(montant)}\n` +
+      `Pour payer et réserver votre chambre : ${url || lienConnu(d)}\nRéférence : ${d.id}`;
     if (d.type === 'visa') return `Bonjour, ici VOYAGE FACILE ✈️\nRéservation pour votre visa — ${voyage(d)}.\n` +
       `Frais de réservation : ${gnf(montant)} (déduits du billet si vous l'achetez chez nous)\nPour payer : ${url || lienConnu(d)}\nRéférence : ${d.id}`;
     if (d.type === 'blocage') return `Bonjour, ici VOYAGE FACILE ✈️\nBloquer le prix — ${voyage(d)}.\n` +
@@ -51,6 +60,8 @@
       `Pour payer : ${url || lienConnu(d)}\nRéférence : ${d.id}`;
   }
   function recu(d){
+    if (d.type === 'hotel') return `Bonjour, ici VOYAGE FACILE 🏨\nPaiement bien reçu : ${gnf(d.paiement_montant_gnf || d.prix_final_gnf || d.prix_indicatif_gnf)}. Merci !\n` +
+      `Nous réservons votre chambre ; votre bon d'hôtel arrive très bientôt ici.\nRéférence : ${d.id}`;
     const opt = d.type === 'visa' || d.type === 'blocage';
     return `Bonjour, ici VOYAGE FACILE ✈️\n${opt ? 'Frais bien reçus' : 'Paiement bien reçu'} : ${gnf(d.paiement_montant_gnf || d.prix_final_gnf || d.prix_indicatif_gnf)}. Merci !\n` +
       `${opt ? 'Votre réservation arrive très bientôt ici.' : 'Votre billet arrive très bientôt ici.'}\nRéférence : ${d.id}`;
@@ -67,13 +78,19 @@
       : 'Achetez votre billet avant la date limite : les frais déjà payés sont déduits.';
     return `Bonjour, ici VOYAGE FACILE ✈️\nVotre réservation est prête${ref ? ` (code ${ref})` : ''}${lim}.\n${ou}\n${suite}\nRéférence : ${d.id}`;
   }
+  function bonHotel(d, ref, ou){
+    return `Bonjour, ici VOYAGE FACILE 🏨\nVotre réservation d'hôtel est confirmée${ref ? ` (n° de confirmation ${ref})` : ''}.\n${voyage(d)}\n${ou}\n` +
+      `Présentez ce bon et votre pièce d'identité à l'arrivée. Bon séjour !`;
+  }
   function billet(d, ref, url){
+    if (d.type === 'hotel') return bonHotel(d, ref, `Téléchargez votre bon d'hôtel ici : ${url || lienConnu(d)}`);
     if (d.type === 'visa' || d.type === 'blocage') return reservation(d, ref, `Téléchargez-la ici : ${url || lienConnu(d)}`);
     return `Bonjour, ici VOYAGE FACILE ✈️\nVotre billet est prêt${ref ? ` (réservation ${ref})` : ''}.\n` +
       `Téléchargez-le ici : ${url || lienConnu(d)}\nBon voyage, partez sans souci !`;
   }
   // Billet envoyé directement en pièce jointe sur WhatsApp.
   function billetJoint(d, ref){
+    if (d.type === 'hotel') return bonHotel(d, ref, 'Vous trouverez votre bon d\'hôtel ci-joint.');
     if (d.type === 'visa' || d.type === 'blocage') return reservation(d, ref, 'Vous la trouverez ci-jointe.');
     return `Bonjour, ici VOYAGE FACILE ✈️\nVotre billet est prêt${ref ? ` (réservation ${ref})` : ''}.\nVous le trouverez ci-joint.\nBon voyage, partez sans souci !`;
   }

@@ -171,6 +171,7 @@ footer .row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:20px;a
     </a>
     <ul class="menu" id="menu">
       <li><a href="reserver.html">Réserver un vol</a></li>
+      <li><a href="hotels.html">Réserver un hôtel</a></li>
       <li><a href="assistant.html">Assistant 24 h/24</a></li>
       <li><a href="suivi.html">Suivre / payer</a></li>
       <li><a href="#services">Services</a></li>
@@ -187,9 +188,9 @@ footer .row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:20px;a
 <div class="hero" id="accueil">
   <div class="wrap hero-grid">
     <div>
-    <span class="eyebrow" style="color:var(--sun)">Agence de voyage en ligne · Conakry</span>
+    <span class="eyebrow" style="color:var(--sun)">Agence de voyage en ligne · partout dans le monde</span>
     <h1>Voyager n'a jamais été aussi <em>facile</em>.</h1>
-    <p class="lead">Billets d'avion, hôtels, visas, Hajj et Omra : réservez depuis votre téléphone, payez par Orange Money ou MTN MoMo, et recevez votre devis rapidement.</p>
+    <p class="lead">Billets d'avion, hôtels, visas, Hajj et Omra, partout dans le monde : réservez depuis votre téléphone, voyez le prix dans votre monnaie, et payez seulement après la confirmation de votre conseiller.</p>
     <div class="badges"><a href="assistant.html" style="background:#f28c28;color:#0b2545;padding:7px 13px;border-radius:30px;font-size:13px;font-weight:700;text-decoration:none">💬 Parler à l'assistant</a><span>✈️ Toutes compagnies</span><span>🕋 Hajj & Omra</span><span>📱 Paiement mobile</span><span>💬 Suivi WhatsApp</span></div>
     </div>
     <div class="hero-emblem"><svg width="250" height="240" viewBox="-4 -6 146 140" aria-hidden="true"><path d="M2 96 C 34 130 96 118 114 52 C 92 108 36 118 2 96 Z" fill="#f28c28"/><path d="M56 100 C56 100 22 70 22 45 C22 26 37 11 56 11 C75 11 90 26 90 45 C90 70 56 100 56 100 Z" fill="#ffffff"/><path d="M56 100 C56 100 22 70 22 45 C22 26 37 11 56 11 Z" fill="#dfe8f3"/><path d="M40 46 L52 58 L73 35" fill="none" stroke="#0b2545" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/><path transform="translate(123 29) rotate(-72) scale(1.15)" d="M17 0 C17 -1.5 15.6 -2.5 13 -2.5 L4.6 -2.5 L-4.8 -15.5 L-8.8 -15.5 L-3.4 -2.5 L-10.4 -2.5 L-13.8 -7.6 L-16.4 -7.6 L-14.4 -2 L-15.4 0 L-14.4 2 L-16.4 7.6 L-13.8 7.6 L-10.4 2.5 L-3.4 2.5 L-8.8 15.5 L-4.8 15.5 L4.6 2.5 L13 2.5 C15.6 2.5 17 1.5 17 0 Z" fill="#f28c28"/></svg></div>
@@ -211,7 +212,7 @@ footer .row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:20px;a
         <label><input type="radio" name="trajet" value="Aller simple"> Aller simple</label>
       </div>
       <div class="grid">
-        <div><label>Départ</label><input name="Départ" value="Conakry (CKY)" required></div>
+        <div><label>Départ</label><input name="Départ" placeholder="Votre ville (ex. Conakry, Paris)"></div>
         <div><label>Destination</label><input name="Destination" placeholder="Ex. Paris, Dubaï…" required></div>
         <div><label>Date aller</label><input type="date" name="Date aller" required></div>
         <div class="retour"><label>Date retour</label><input type="date" name="Date retour"></div>
@@ -223,14 +224,13 @@ footer .row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:20px;a
 
     <form class="panel" id="p-hotel" data-type="Hôtel">
       <div class="grid">
-        <div><label>Ville</label><input name="Ville" placeholder="Ex. Istanbul" required></div>
+        <div><label>Ville</label><input name="Ville" placeholder="Ex. Istanbul, Dakar, Paris…" required></div>
         <div><label>Arrivée</label><input type="date" name="Arrivée" required></div>
         <div><label>Départ</label><input type="date" name="Départ" required></div>
-        <div><label>Chambres</label><select name="Chambres"><option>1 chambre</option><option>2 chambres</option><option>3 chambres et +</option></select></div>
-        <div><label>Personnes</label><select name="Personnes"><option>1</option><option>2</option><option>3</option><option>4</option><option>5 et +</option></select></div>
-        <div><label>Budget / nuit</label><select name="Budget"><option>Économique</option><option>Confort (3★)</option><option>Supérieur (4★)</option><option>Luxe (5★)</option></select></div>
+        <div><label>Chambres</label><select name="Chambres"><option value="1">1 chambre</option><option value="2">2 chambres</option><option value="3">3 chambres</option><option value="4">4 chambres</option><option value="5">5 chambres</option></select></div>
+        <div><label>Adultes</label><select name="Adultes"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></div>
       </div>
-      <button class="btn btn-sun go" type="submit">Demander mon devis</button>
+      <button class="btn btn-sun go" type="submit">Voir les hôtels et les prix</button>
     </form>
 
     <form class="panel" id="p-visa" data-type="Visa">
@@ -261,8 +261,8 @@ footer .row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:20px;a
     <h2 class="sec-title">Tout votre voyage, au même endroit</h2>
     <p class="sec-sub">De la recherche du meilleur billet jusqu'à votre retour, l'équipe VOYAGE FACILE s'occupe de tout.</p>
     <div class="cards">
-      <div class="card"><div class="ico">✈️</div><h3>Billets d'avion</h3><p>Vols au départ de Conakry vers l'Afrique, l'Europe, le Golfe, l'Asie et l'Amérique, au meilleur tarif trouvé.</p></div>
-      <div class="card"><div class="ico">🏨</div><h3>Hôtels</h3><p>Hébergements vérifiés, de l'économique au 5 étoiles, réservés selon votre budget.</p></div>
+      <div class="card"><div class="ico">✈️</div><h3>Billets d'avion</h3><p>Vols au départ de votre ville vers l'Afrique, l'Europe, le Golfe, l'Asie et les Amériques, au meilleur tarif trouvé.</p></div>
+      <div class="card"><div class="ico">🏨</div><h3>Hôtels</h3><p>Hôtels du monde entier, de l'économique au 5 étoiles : prix du jour dans votre monnaie. <a href="hotels.html" style="font-weight:700">Chercher un hôtel →</a></p></div>
       <div class="card"><div class="ico">🛂</div><h3>Assistance visa</h3><p>Liste des pièces, remplissage du dossier, prise de rendez-vous et suivi de votre demande.</p></div>
       <div class="card"><div class="ico">🕋</div><h3>Hajj & Omra</h3><p>Formules complètes : visa, vol, hôtel à La Mecque et Médine, transferts et encadrement.</p></div>
       <div class="card"><div class="ico">🛡️</div><h3>Assurance voyage</h3><p>Couverture santé et rapatriement, souvent exigée pour les visas.</p></div>
@@ -297,7 +297,7 @@ footer .row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:20px;a
   <div class="wrap">
     <span class="eyebrow" style="color:var(--sun)">Paiement</span>
     <h2 class="sec-title">Payez comme vous voulez</h2>
-    <p class="sec-sub">Le paiement se fait uniquement après confirmation du prix par un conseiller. Ensuite, payez par Orange Money directement depuis l'application ou la page <a href="suivi.html" style="color:var(--sun);font-weight:700">« Suivre et payer ma demande »</a>.</p>
+    <p class="sec-sub">Le paiement se fait uniquement après confirmation du prix par un conseiller. Ensuite, payez par Orange Money directement depuis l'application ou la page <a href="suivi.html" style="color:var(--sun);font-weight:700">« Suivre et payer ma demande »</a>. Vous êtes à l'étranger ? Un proche peut payer pour vous, ou votre conseiller vous indique un autre moyen de paiement.</p>
     <div class="paylist">
       <div class="payitem"><div class="dot" style="background:#ff7900;color:#fff">OM</div><div><b>Orange Money</b><span>Paiement mobile</span></div></div>
       <div class="payitem"><div class="dot" style="background:#ffcc00;color:#0b2545">MoMo</div><div><b>MTN Mobile Money</b><span>Paiement mobile</span></div></div>
@@ -456,6 +456,8 @@ document.getElementById("p-vol").addEventListener("submit", e => {
   const f = e.target, q = new URLSearchParams();
   const dest = (f.querySelector('[name="Destination"]').value || "").replace(/\s*\(.*\)\s*$/, "").trim();
   if (dest) q.set("to", dest);
+  const dep = (f.querySelector('[name="Départ"]').value || "").replace(/\s*\(.*\)\s*$/, "").trim();
+  if (dep) q.set("from", dep);
   const d1 = f.querySelector('[name="Date aller"]').value, d2 = f.querySelector('[name="Date retour"]').value;
   if (d1) q.set("d1", d1);
   const simple = f.querySelector('input[name="trajet"]:checked').value === "Aller simple";
@@ -463,7 +465,18 @@ document.getElementById("p-vol").addEventListener("submit", e => {
   const ad = parseInt(f.querySelector('[name="Voyageurs"]').value) || 1; q.set("ad", String(Math.min(ad, 9)));
   location.href = "reserver.html?" + q.toString();
 });
-document.querySelectorAll("form").forEach(f => f.id !== "p-vol" && f.addEventListener("submit", e => {
+// Hôtel : recherche en direct sur la page « Réserver un hôtel »
+document.getElementById("p-hotel").addEventListener("submit", e => {
+  e.preventDefault();
+  const f = e.target, q = new URLSearchParams();
+  const v = n => (f.querySelector(`[name="${n}"]`).value || "").trim();
+  if (v("Ville")) q.set("lieu", v("Ville"));
+  if (v("Arrivée")) q.set("d1", v("Arrivée"));
+  if (v("Départ")) q.set("d2", v("Départ"));
+  q.set("ch", v("Chambres") || "1"); q.set("ad", v("Adultes") || "2");
+  location.href = "hotels.html?" + q.toString();
+});
+document.querySelectorAll("form").forEach(f => f.id !== "p-vol" && f.id !== "p-hotel" && f.addEventListener("submit", e => {
   e.preventDefault();
   const data = new FormData(f);
   let lines = ["Demande : " + f.dataset.type];

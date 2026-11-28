@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Réserver un hôtel – VOYAGE FACILE</title>
+<meta name="description" content="Hôtels du monde entier avec VOYAGE FACILE : prix du jour dans votre monnaie, confirmation par un conseiller sur WhatsApp avant tout paiement.">
+<link rel="icon" href="icone.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.ac{position:relative}
+.ac ul{position:absolute;z-index:10;left:0;right:0;top:100%;background:#fff;border:1px solid var(--line);border-radius:12px;margin-top:4px;list-style:none;max-height:280px;overflow:auto;box-shadow:0 12px 30px rgba(11,37,69,.12)}
+.ac li{padding:10px 12px;cursor:pointer;border-bottom:1px solid #f0f3f7}
+.ac li:hover,.ac li[aria-selected="true"]{background:var(--sky)}
+.ac li b{color:var(--navy)}
+.steps{display:flex;gap:6px;margin:4px 0 14px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.steps span{padding:4px 10px;border-radius:999px;background:#e9eef5}
+.steps span.on{background:var(--navy);color:#fff}
+.recap{background:var(--sky);border-radius:12px;padding:12px;margin-bottom:12px;font-size:14px}
+.check{display:flex;gap:10px;align-items:flex-start;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);font-weight:500;margin:12px 0}
+.check input{width:22px;height:22px;min-height:0;flex:0 0 auto;margin-top:1px}
+.loading{display:flex;align-items:center;gap:10px;color:var(--muted);padding:18px 4px}
+.secours{display:flex;flex-direction:column;gap:10px}.secours>b{font-size:17px;color:var(--navy)}.secours p{margin:0}.secours .petit{font-size:13px;text-align:center}.secours .btn{text-align:center;text-decoration:none}
+.spin{width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--or);border-radius:50%;animation:s 0.8s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+.px-gnf{display:block;font-size:12px;font-weight:500;color:var(--muted);line-height:1.2}
+.devise-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;background:var(--sky);border-radius:12px;padding:8px 12px;margin:0 0 10px;font-size:14px}
+.devise-bar select{width:auto;min-height:38px;padding:6px 10px}
+.civ{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 6px}
+.civ label{display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:15px;color:var(--ink);background:var(--sky);padding:8px 12px;border-radius:999px;cursor:pointer;margin:0;min-height:42px}
+.civ input{width:auto;min-height:0}
+[hidden]{display:none!important}
+.lang-top{background:transparent;border:1px solid rgba(255,255,255,.4);cursor:pointer}
+.htl-hero{margin-top:6px}
+.ac ul{color:var(--ink)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="hrow">
+    <a class="brand" href="index.html" aria-label="VOYAGE FACILE – accueil"><svg width="40" height="40" viewBox="14 0 112 112" aria-hidden="true"><path d="M56 100 C56 100 22 70 22 45 C22 26 37 11 56 11 C75 11 90 26 90 45 C90 70 56 100 56 100 Z" fill="#ffffff"/><path d="M56 100 C56 100 22 70 22 45 C22 26 37 11 56 11 Z" fill="#dfe8f3"/><path d="M40 46 L52 58 L73 35" fill="none" stroke="#0b2545" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/><path transform="translate(96 18) rotate(-40) scale(1.25)" d="M17 0 C17 -1.5 15.6 -2.5 13 -2.5 L4.6 -2.5 L-4.8 -15.5 L-8.8 -15.5 L-3.4 -2.5 L-10.4 -2.5 L-13.8 -7.6 L-16.4 -7.6 L-14.4 -2 L-15.4 0 L-14.4 2 L-16.4 7.6 L-13.8 7.6 L-10.4 2.5 L-3.4 2.5 L-8.8 15.5 L-4.8 15.5 L4.6 2.5 L13 2.5 C15.6 2.5 17 1.5 17 0 Z" fill="#f28c28"/></svg><span><b>VOYAGE <span>FACILE</span></b><small>PARTEZ SANS SOUCI</small></span></a>
+    <button class="wa-top lang-top" id="langTop" type="button" aria-label="Changer de langue">EN</button>
+    <a class="wa-top" id="waTop" href="#">WhatsApp</a>
+  </div>
+</header>
+
+<main>
+  <div id="hotels"></div>
+  <p class="muted" style="margin-top:16px;text-align:center"><a href="reserver.html">Chercher un vol</a> · <a href="suivi.html">Suivre et payer ma demande</a></p>
+</main>
+<div class="toast" id="toast"></div>
+<script src="config.js"></script>
+<script src="pays.js"></script>
+<script src="langue.js"></script>
+<script src="devise.js"></script>
+<script src="transit.js"></script>
+<script src="hotels.js"></script>
+<script>
+const C = window.VF_CONFIG;
+const API = C.SUPABASE_URL + "/functions/v1/vf-api";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const T = (s, v) => window.L ? L.t(s, v) : s;
+const waLink = t => 'https://wa.me/' + C.AGENCE_WHATSAPP + '?text=' + encodeURIComponent(t);
+function toast(t){ const el = $('#toast'); el.textContent = t; el.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => el.style.display = 'none', 3000); }
+$('#waTop').href = waLink(T("Bonjour VOYAGE FACILE, j'ai une question sur un hôtel."));
+if (window.L) { $('#langTop').textContent = L.autre().toUpperCase(); $('#langTop').onclick = () => L.choisir(L.autre()); } else $('#langTop').hidden = true;
+
+// Appel au serveur avec réessais automatiques en cas de coupure réseau.
+async function api(action, data){
+  const corps = JSON.stringify({ action, devise: window.Devise ? Devise.code() : 'GNF', langue: window.L ? L.code : 'fr', ...data });
+  const max = ['hotel_recherche','hotel_lieux','hotel_etat'].includes(action) ? 2 : 0;
+  for (let k = 0; ; k++) {
+    let r = null, j = {};
+    try {
+      r = await fetch(API, { method:'POST', headers:{ 'Content-Type':'application/json', 'apikey':C.SUPABASE_ANON_KEY, 'Authorization':'Bearer ' + C.SUPABASE_ANON_KEY }, body: corps });
+      try { j = await r.json(); } catch(e){}
+    } catch(e){ r = null; }
+    if ((!r || (!r.ok && !j.erreur)) && k < max) { await new Promise(ok => setTimeout(ok, 1500 * (k + 1))); continue; }
+    if (!r) throw new Error(T("Pas de connexion Internet. Vérifiez votre réseau puis réessayez."));
+    if (!r.ok) throw new Error(j.erreur || T("Le service ne répond pas. Réessayez ou écrivez-nous sur WhatsApp."));
+    return j;
+  }
+}
+// Barre « Prix affichés en … » : le client change de monnaie sans quitter la page.
+const barreDevise = () => window.Devise ? `<div class="devise-bar"><span>${T('Prix affichés en')}</span><select id="devSel" aria-label="Monnaie">${Devise.liste().map(d => `<option value="${d.code}"${d.code === Devise.code() ? ' selected' : ''}>${esc(d.nom)} (${d.code})</option>`).join('')}</select></div>` : '';
+const memo = {
+  lire(){ try { return JSON.parse(localStorage.getItem('vf_web_demandes') || '[]'); } catch(e){ return []; } },
+  ajouter(ref, tel){ try { const l = this.lire().filter(x => x.reference !== ref); l.unshift({ reference: ref, telephone: tel }); localStorage.setItem('vf_web_demandes', JSON.stringify(l.slice(0, 20))); } catch(e){} }
+};
+const HOT = Hotels.monter($('#hotels'), {
+  api, t: T, toast,
+  prix: (n, r) => window.Devise ? Devise.html(n, r) : Math.round(n).toLocaleString('fr-FR') + ' GNF',
+  entete: barreDevise,
+  apresOffres: r => { const s = r.querySelector('#devSel'); if (s) s.onchange = () => Devise.choisir(s.value); },
+  ouvrir: url => { window.open(url, '_blank', 'noopener'); },
+  waAgence: waLink,
+  moi: () => { const l = memo.lire()[0]; return l ? { tel: l.telephone } : {}; },
+  placeholderTel: window.Pays && Pays.exempleTel ? Pays.exempleTel() : '+…',
+  normaliserTel: v => window.Pays && Pays.telInternational ? Pays.telInternational(v) : v,
+  enregistrer: (v, m) => memo.ajouter(v.reference, m.tel),
+  voirVoyages: () => { window.location.href = 'suivi.html'; },
+  libVoir: 'Suivre et payer ma demande',
+  etape: () => window.scrollTo({ top: 0, behavior: 'smooth' }),
+});
+// Pré-remplissage depuis la page d'accueil (?lieu=Dakar&d1=…&d2=…&ch=1&ad=2)
+const q = new URLSearchParams(location.search);
+if ([...q.keys()].length) HOT.remplir({ lieu: q.get('lieu'), arrivee: q.get('d1'), depart: q.get('d2'), chambres: +q.get('ch'), adultes: +q.get('ad') });
+</script>
+</body>
+</html>
