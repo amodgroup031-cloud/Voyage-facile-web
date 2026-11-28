@@ -1,14 +1,14 @@
 {
-  "web": "2026.11.28.5",
+  "web": "2026.11.28.6",
   "notes": [
-    "Hôtels du monde entier, application adaptée à tous les pays, Mes discussions"
+    "Bouton « Détails » sur chaque hôtel : photos, description, équipements, horaires"
   ],
-  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.28.5.zip",
-  "checksum": "d74a856cecfb2bf72c6377131c4d6c5263078fcad2f35bd168fc0c45ae09aa2b",
+  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.28.6.zip",
+  "checksum": "0caae9f26a902ede74a46a3aa758e666a0c642a00979a160ece66fcd4c0fe7f5",
   "native_min": 18,
   "apk": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/Voyage-Facile.apk",
   "apk_version": "1.0.18",
   "notes_en": [
-    "Hotels worldwide, app adapted to every country, My chats"
+    "“Details” button on every hotel: photos, description, amenities, times"
   ]
 }

@@ -36,7 +36,36 @@
 .htl-pied .htl-px>b{font-size:19px;color:#0b2545;display:block;line-height:1.15}
 .htl-pied .htl-px>span{display:block;font-size:12.5px;color:#5b6b80}
 .htl-grille{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(290px,1fr))}
-.htl-pied .btn{min-width:130px}
+.htl-pied .htl-btns{display:flex;gap:8px}
+.htl-pied .btn{min-width:0;padding-left:16px;padding-right:16px}
+.htl-pied .btn-ghost{background:#eef3f9;color:#0b2545;border:0}
+.htl-fond{position:fixed;inset:0;background:rgba(5,20,40,.55);z-index:9000;display:flex;align-items:flex-end;justify-content:center}
+.htl-feuille{background:#fff;width:100%;max-width:640px;max-height:92vh;border-radius:20px 20px 0 0;display:flex;flex-direction:column;overflow:hidden;animation:htlMonte .22s ease-out}
+@keyframes htlMonte{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+@media(min-width:700px){.htl-fond{align-items:center}.htl-feuille{border-radius:20px;max-height:88vh}}
+.htl-f-haut{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #e3eaf3}
+.htl-f-haut b{flex:1;color:#0b2545;font-size:16px;line-height:1.25}
+.htl-f-x{border:0;background:#eef3f9;color:#0b2545;width:38px;height:38px;border-radius:50%;font-size:18px;cursor:pointer;flex:0 0 auto}
+.htl-f-corps{overflow-y:auto;padding:0 0 12px;-webkit-overflow-scrolling:touch}
+.htl-galerie{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:6px;background:#e9eef5;height:230px}
+.htl-galerie img{flex:0 0 88%;height:100%;object-fit:cover;scroll-snap-align:center;display:block}
+.htl-galerie img:only-child{flex-basis:100%}
+.htl-galerie .htl-vide{flex:1;display:flex;align-items:center;justify-content:center;color:#8aa0bb}
+.htl-nbp{font-size:12px;color:#5b6b80;padding:4px 14px 0}
+.htl-f-sec{padding:12px 14px 0}
+.htl-f-sec h3{font-size:15px;color:#0b2545;margin:0 0 6px}
+.htl-f-sec p{margin:0;font-size:14px;line-height:1.5;color:#22324a;white-space:pre-line}
+.htl-desc.court{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.htl-lien{background:none;border:0;color:#1d4f86;font-weight:700;padding:6px 0;cursor:pointer;font-size:14px}
+.htl-equip{display:flex;flex-wrap:wrap;gap:6px}
+.htl-equip span{font-size:12.5px;background:#eef3f9;color:#22324a;border-radius:999px;padding:4px 10px}
+.htl-heures{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.htl-heures div{background:#f4f7fb;border-radius:12px;padding:8px 10px;font-size:13px;color:#5b6b80}
+.htl-heures b{display:block;color:#0b2545;font-size:15px}
+.htl-f-ch{background:#f4f9ff;border:1px solid #d6e6f7;border-radius:14px;padding:10px 12px;font-size:14px;line-height:1.45}
+.htl-f-bas{padding:10px 14px calc(10px + env(safe-area-inset-bottom));border-top:1px solid #e3eaf3;display:flex;align-items:center;gap:10px;background:#fff}
+.htl-f-bas .htl-px{flex:1}.htl-f-bas .htl-px b{display:block;color:#0b2545;font-size:17px}.htl-f-bas .htl-px>span{font-size:12px;color:#5b6b80}
+.htl-f-load{display:flex;align-items:center;gap:8px;color:#5b6b80;font-size:14px;padding:14px}
 .htl-recap{display:flex;gap:12px;align-items:flex-start}
 .htl-recap img{width:86px;height:86px;object-fit:cover;border-radius:12px;flex:0 0 auto}
 .htl-recap .htl-ph{width:86px;height:86px;border-radius:12px;background:#dfe8f3;display:flex;align-items:center;justify-content:center;color:#8aa0bb;flex:0 0 auto}
@@ -130,6 +159,8 @@
     const t = o.t || Tdef, prix = o.prix || (n => String(n)), api = o.api;
     const $ = s => racine.querySelector(s);
     const H = { mode: null, rech: null, params: null, choix: null, manuel: false, filtre: { tri: 'prix', rembours: false, dej: false } };
+    const FICHES = {};   // fiches détaillées déjà chargées
+    let fiche = null;    // fiche « Détails » ouverte
     const opt = (n, a, sel) => Array.from({ length: n }, (_, k) => `<option value="${a + k}"${a + k === sel ? ' selected' : ''}>${a + k}</option>`).join('');
     const d0 = auj();
     racine.innerHTML = `
@@ -190,6 +221,7 @@
       </div>`;
 
     function etape(nom){
+      fermerDetails();
       racine.querySelectorAll('[data-h]').forEach(e => e.hidden = e.dataset.h !== nom);
       H.etape = nom;
       if (o.etape) o.etape(nom); else window.scrollTo && window.scrollTo(0, 0);
@@ -345,8 +377,64 @@
           <div class="htl-ch"><span data-no-t>${esc(c.nom)}</span>${repas(c.repas) && !avecRepas(x) ? ` · ${esc(t(repas(c.repas)))}` : ''}</div>
           <div class="htl-tags">${tags}</div>
           <div class="htl-pied"><div class="htl-px"><b>${prix(x.total_gnf)}</b><span>${esc(t('total pour {n}', { n: s.nuits > 1 ? t('{n} nuits', { n: s.nuits }) : t('1 nuit') }))}</span>${s.nuits > 1 ? `<span>${t('soit {p} par nuit', { p: prix(nuit, false) })}</span>` : ''}</div>
-            <button class="btn btn-or" type="button" data-hc="${x.i}">${t('Choisir')}</button></div></div></article>`;
+            <div class="htl-btns"><button class="btn btn-ghost" type="button" data-hd="${x.i}">${t('Détails')}</button><button class="btn btn-or" type="button" data-hc="${x.i}">${t('Choisir')}</button></div></div></div></article>`;
     }
+    /* Fiche détaillée d'un hôtel (bouton « Détails ») : photos, description, équipements, horaires, carte */
+    function fermerDetails(){ if (fiche) { fiche.remove(); fiche = null; document.documentElement.style.overflow = ''; } }
+    async function voirDetails(i){
+      const x = H.rech && H.rech.offres.find(y => y.i === i); if (!x) return;
+      const h = x.hotel, c = x.chambre, s = x.sejour;
+      fermerDetails();
+      fiche = document.createElement('div');
+      fiche.className = 'htl-fond'; fiche.setAttribute('role', 'dialog'); fiche.setAttribute('aria-modal', 'true');
+      fiche.innerHTML = `<div class="htl-feuille"><div class="htl-f-haut"><b data-no-t>${esc(h.nom)}</b><button class="htl-f-x" type="button" aria-label="${esc(t('Fermer'))}">✕</button></div>
+        <div class="htl-f-corps"></div>
+        <div class="htl-f-bas"><div class="htl-px"><b>${prix(x.total_gnf, false)}</b><span>${esc(t('total pour {n}', { n: s.nuits > 1 ? t('{n} nuits', { n: s.nuits }) : t('1 nuit') }))}</span></div>
+          <button class="btn btn-or" type="button" data-fc>${t('Choisir cet hôtel')}</button></div></div>`;
+      document.body.appendChild(fiche); document.documentElement.style.overflow = 'hidden';
+      const corps = fiche.querySelector('.htl-f-corps');
+      fiche.addEventListener('click', e => { if (e.target === fiche) fermerDetails(); });
+      fiche.querySelector('.htl-f-x').onclick = fermerDetails;
+      fiche.querySelector('[data-fc]').onclick = () => { fermerDetails(); versClient(i); };
+      const chambre = `<div class="htl-f-sec"><h3>${t('Votre chambre')}</h3><div class="htl-f-ch"><b data-no-t>${esc(c.nom)}</b>${repas(c.repas) ? ' · ' + esc(t(repas(c.repas))) : ''}<br>
+        ${esc(t('Du {a} au {d}', { a: jourCourt(s.arrivee), d: jourCourt(s.depart) }))} · ${esc(s.nuits > 1 ? t('{n} nuits', { n: s.nuits }) : t('1 nuit'))}<br>
+        ${c.remboursable ? `<span class="htl-tag ok">${esc(c.annulation_avant ? t("Annulation gratuite jusqu'au {d}", { d: jourLong(c.annulation_avant) }) : t('Annulation gratuite'))}</span>` : `<span class="htl-tag">${t('Non remboursable')}</span>`}</div></div>`;
+      const dessiner = (d, erreur) => {
+        const photos = d && d.photos && d.photos.length ? d.photos : (h.photo ? [h.photo] : []);
+        const adr = [d && d.adresse || h.adresse, d && d.ville || h.ville].filter(Boolean).join(', ');
+        const note = (d && d.note) || h.note, avis = (d && d.avis) || h.avis, et = (d && d.etoiles) || h.etoiles;
+        let html = `<div class="htl-galerie">${photos.length ? photos.map(u => `<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer">`).join('') : `<span class="htl-vide">${ICO_LIT}</span>`}</div>
+          ${photos.length > 1 ? `<div class="htl-nbp">${esc(t('{n} photos · faites glisser', { n: photos.length }))}</div>` : ''}
+          <div class="htl-f-sec"><div>${etoiles(et)}${note ? ` <span class="htl-note" style="vertical-align:middle">${esc(String(note).replace('.', EN() ? '.' : ','))} <small>${esc(t(appreciation(note)))}</small></span>` : ''}${avis ? ` <span class="htl-adr">${esc(t('{n} avis', { n: avis.toLocaleString(LOC()) }))}</span>` : ''}</div>
+            ${adr ? `<p class="htl-adr" style="margin-top:6px" data-no-t>📍 ${esc(adr)}</p>` : ''}
+            ${d && d.position ? `<button class="htl-lien" type="button" data-carte>${t('Voir sur la carte')}</button>` : ''}</div>
+          ${chambre}`;
+        if (!d) html += erreur ? `<div class="htl-f-sec"><p class="muted">${esc(t('Les détails de cet hôtel ne sont pas disponibles pour le moment.'))}</p></div>` : `<div class="htl-f-load"><div class="spin"></div>${t('Chargement des détails…')}</div>`;
+        else {
+          if (d.arrivee || d.depart) html += `<div class="htl-f-sec"><h3>${t('Horaires')}</h3><div class="htl-heures">${d.arrivee ? `<div>${t('Arrivée à partir de')}<b>${esc(d.arrivee)}</b></div>` : ''}${d.depart ? `<div>${t('Départ avant')}<b>${esc(d.depart)}</b></div>` : ''}</div></div>`;
+          if (d.description) html += `<div class="htl-f-sec"><h3>${t("À propos de l'hôtel")}</h3><p class="htl-desc${d.description.length > 380 ? ' court' : ''}" data-no-t>${esc(d.description)}</p>${d.description.length > 380 ? `<button class="htl-lien" type="button" data-plus="desc">${t('Lire la suite')}</button>` : ''}</div>`;
+          if (d.equipements && d.equipements.length) html += `<div class="htl-f-sec"><h3>${t('Équipements')}</h3><div class="htl-equip" data-no-t>${d.equipements.map((e, k) => `<span${k >= 12 ? ' hidden' : ''}>${esc(e)}</span>`).join('')}</div>${d.equipements.length > 12 ? `<button class="htl-lien" type="button" data-plus="equip">${esc(t('Voir tout ({n})', { n: d.equipements.length }))}</button>` : ''}</div>`;
+          if (d.infos) html += `<div class="htl-f-sec"><h3>${t('Informations importantes')}</h3><p data-no-t style="font-size:13px;color:#5b6b80">${esc(d.infos)}</p></div>`;
+        }
+        corps.innerHTML = html;
+        const carteB = corps.querySelector('[data-carte]');
+        if (carteB) carteB.onclick = () => { const u = `https://www.google.com/maps/search/?api=1&query=${d.position.lat},${d.position.lng}`; o.ouvrir ? o.ouvrir(u) : window.open(u, '_blank'); };
+        corps.querySelectorAll('[data-plus]').forEach(b => b.onclick = () => {
+          if (b.dataset.plus === 'desc') corps.querySelector('.htl-desc').classList.remove('court');
+          else corps.querySelectorAll('.htl-equip span[hidden]').forEach(sp => sp.hidden = false);
+          b.remove();
+        });
+      };
+      if (FICHES[h.id]) return dessiner(FICHES[h.id]);
+      dessiner(null);
+      const ouvert = fiche;
+      try {
+        const d = await api('hotel_details', { id: h.id });
+        FICHES[h.id] = d;
+        if (fiche === ouvert) dessiner(d);
+      } catch (e) { if (fiche === ouvert) dessiner(null, true); }
+    }
+
     function afficherOffres(){
       const f = H.filtre, toutes = H.rech.offres;
       let l = toutes.filter(x => (!f.rembours || x.chambre.remboursable) && (!f.dej || avecRepas(x)));
@@ -362,6 +450,7 @@
           : `<div class="panel">${t('Aucun hôtel avec ces critères.')} <button class="btn btn-ghost w100" style="margin-top:10px" type="button" id="hTous">${t('Voir tous les hôtels')}</button></div>`) +
         `<button class="btn btn-ghost w100" type="button" id="hMan2" style="margin-top:4px">${t('Aucun ne convient ? Demander à un conseiller')}</button>`;
       $('#hRes').querySelectorAll('[data-hc]').forEach(x => x.onclick = () => versClient(+x.dataset.hc));
+      $('#hRes').querySelectorAll('[data-hd]').forEach(x => x.onclick = () => voirDetails(+x.dataset.hd));
       $('#hFil').querySelectorAll('[data-tri]').forEach(x => x.onclick = () => { H.filtre.tri = x.dataset.tri; afficherOffres(); });
       $('#hFil').querySelectorAll('[data-f]').forEach(x => x.onclick = () => { H.filtre[x.dataset.f] = !H.filtre[x.dataset.f]; afficherOffres(); });
       if ($('#hPlus')) $('#hPlus').onclick = () => { H.max += 12; afficherOffres(); };
@@ -442,6 +531,7 @@
     return {
       // Bouton retour : revient d'une étape en arrière dans le parcours. false si on est déjà au début.
       retour(){
+        if (fiche) { fermerDetails(); return true; }
         if (H.etape === 'client') { etape('recherche'); return true; }
         if (H.etape === 'fin') { $('#hRes').innerHTML = ''; etape('recherche'); return true; }
         return false;
