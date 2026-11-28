@@ -283,6 +283,21 @@
     "Bonjour VOYAGE FACILE, j'ai une question sur ma demande.":'Hello VOYAGE FACILE, I have a question about my request.',
     "Bonjour VOYAGE FACILE, j'ai besoin d'aide pour suivre ou payer ma demande.":'Hello VOYAGE FACILE, I need help tracking or paying my request.',
     'Besoin d\'aide ?':'Need help?',
+    // ---------- Corbeille (Mes voyages / Mes demandes) ----------
+    'Corbeille':'Trash', "Effacer l'historique":'Clear history', "Effacer l'historique ?":'Clear history?', 'Effacer':'Clear',
+    'Vos {n} voyages iront dans la corbeille. Vous pourrez les restaurer pendant {j} jours.':'Your {n} trips will go to the trash. You can restore them for {j} days.',
+    'Votre voyage ira dans la corbeille. Vous pourrez le restaurer pendant {j} jours.':'Your trip will go to the trash. You can restore it for {j} days.',
+    'Vos {n} demandes iront dans la corbeille. Vous pourrez les restaurer pendant {j} jours.':'Your {n} requests will go to the trash. You can restore them for {j} days.',
+    'Votre demande ira dans la corbeille. Vous pourrez la restaurer pendant {j} jours.':'Your request will go to the trash. You can restore it for {j} days.',
+    'Historique effacé':'History cleared', 'Voyage mis à la corbeille':'Trip moved to trash', 'Demande mise à la corbeille':'Request moved to trash',
+    'Supprimer de mes voyages':'Remove from my trips', 'Supprimer de mes demandes':'Remove from my requests', 'Mes demandes':'My requests',
+    'Les éléments restent {n} jours dans la corbeille, puis sont effacés définitivement.':'Items stay in the trash for {n} days, then are deleted for good.',
+    'Effacé dans {n} jours':'Deleted in {n} days', 'Effacé demain':'Deleted tomorrow', 'Restaurer':'Restore', 'Supprimer':'Delete',
+    'La corbeille est vide.':'The trash is empty.', 'Action impossible':'Action not possible', 'Restauré':'Restored',
+    'Supprimer définitivement ?':'Delete permanently?', '« {x} » sera effacé pour toujours. Cette action est irréversible.':'"{x}" will be deleted forever. This cannot be undone.',
+    'Supprimé définitivement':'Permanently deleted', 'Vider la corbeille ?':'Empty the trash?', 'Vider la corbeille':'Empty trash', 'Vider':'Empty',
+    'Les {n} éléments seront effacés pour toujours. Cette action est irréversible.':'All {n} items will be deleted forever. This cannot be undone.',
+    'Corbeille vidée':'Trash emptied', 'Annuler':'Cancel', 'Confirmer':'Confirm',
   };
 
   // Phrases avec des parties variables (texte déjà affiché), pour les textes construits ailleurs.

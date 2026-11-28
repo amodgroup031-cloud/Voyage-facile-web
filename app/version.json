@@ -1,14 +1,14 @@
 {
-  "web": "2026.11.28.1",
+  "web": "2026.11.28.2",
   "notes": [
-    "Messages et paiement plus simples"
+    "Corbeille : supprimez et restaurez vos voyages"
   ],
-  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.28.1.zip",
-  "checksum": "46858f861fb2f24bd195510e263cc5fed9ceebfcbd9bc281dd64c00007b87cc2",
+  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.28.2.zip",
+  "checksum": "586fbfc2dfc76eb92466fb951c4dbd434927863c940279e0dd91bf7906e8c3e1",
   "native_min": 18,
   "apk": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/Voyage-Facile.apk",
   "apk_version": "1.0.18",
   "notes_en": [
-    "Simpler messages and payment"
+    "Trash: delete and restore your trips"
   ]
 }

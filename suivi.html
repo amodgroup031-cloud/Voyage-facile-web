@@ -60,6 +60,7 @@
 <script src="langue.js"></script>
 <script src="devise.js"></script>
 <script src="paiement.js"></script>
+<script src="corbeille.js"></script>
 <script>
 const C = window.VF_CONFIG;
 const API = C.SUPABASE_URL + "/functions/v1/vf-api";
@@ -100,12 +101,48 @@ const EXPL = {
   annulee: "Cette demande a été annulée. Écrivez-nous pour une nouvelle recherche."
 };
 let INFOS = null, DEM = [];
+// Corbeille : les demandes effacées restent 30 jours sur cet appareil, puis disparaissent.
+const CORB = window.Corbeille ? Corbeille.locale({ liste: 'vf_web_demandes', corbeille: 'vf_web_corbeille' }) : null;
+let voirCorb = false;
+const infoDem = ref => { const d = DEM.find(x => x.reference === ref); return d ? { trajet: d.trajet, statut: d.statut } : null; };
+function outils(){
+  const nc = CORB ? CORB.nombre() : 0;
+  if (!CORB || (!DEM.length && !nc)) return '';
+  return `<div class="vfc-outils" style="margin-top:12px">${nc ? `<button type="button" class="vfc-btn" id="bCorb">${Corbeille.ICO.poubelle} ${T('Corbeille')} <span class="n">${nc}</span></button>` : ''}${DEM.length ? `<button type="button" class="vfc-btn rouge" id="bEffacer">${T("Effacer l'historique")}</button>` : ''}</div>`;
+}
+function brancherOutils(){
+  if (!CORB) return;
+  if ($('#bCorb')) $('#bCorb').onclick = () => { voirCorb = true; afficher(); window.scrollTo(0, 0); };
+  if ($('#bEffacer')) $('#bEffacer').onclick = async () => {
+    const n = DEM.length;
+    if (!await Corbeille.confirmer({ danger: true, titre: T("Effacer l'historique ?"), oui: T('Effacer'),
+      texte: T(n > 1 ? 'Vos {n} demandes iront dans la corbeille. Vous pourrez les restaurer pendant {j} jours.' : 'Votre demande ira dans la corbeille. Vous pourrez la restaurer pendant {j} jours.', { n, j: Corbeille.JOURS }) })) return;
+    const refs = memo.lire().map(x => x.reference);
+    CORB.toutMettre(x => infoDem(x.reference)); DEM = []; afficher();
+    Corbeille.annulable(T('Historique effacé'), () => { CORB.restaurerTout(refs); charger(); });
+  };
+  $('#liste').querySelectorAll('[data-suppr]').forEach(b => b.onclick = () => {
+    const ref = b.dataset.suppr; if (!CORB.mettre(ref, infoDem(ref))) return;
+    DEM = DEM.filter(d => d.reference !== ref); afficher();
+    Corbeille.annulable(T('Demande mise à la corbeille'), () => { CORB.restaurer(ref); charger(); });
+  });
+}
+function afficherCorbeille(){
+  Corbeille.liste($('#liste'), { items: CORB.items(), t: T, toast, libRetour: 'Mes demandes',
+    titre: x => (x.info && x.info.trajet) || x.item.reference,
+    details: x => [T('Réf. {r}', { r: x.item.reference }), x.info && x.info.statut ? T(LIB[x.info.statut] || x.info.statut) : ''].filter(Boolean).join(' · '),
+    retour: () => { voirCorb = false; afficher(); },
+    restaurer: x => CORB.restaurer(x.item.reference), supprimer: x => CORB.supprimer(x.item.reference), vider: () => CORB.vider(),
+    apres: () => { if (!CORB.nombre()) voirCorb = false; charger(); } });
+}
 
 function afficher(){
   const l = memo.lire();
-  if (!DEM.length) { $('#liste').innerHTML = ''; $('#fTitre').textContent = T('Retrouver une demande'); return; }
+  $('#fSuivi').hidden = !!(CORB && voirCorb);
+  if (CORB && voirCorb) { afficherCorbeille(); return; }
+  if (!DEM.length) { $('#liste').innerHTML = outils(); brancherOutils(); $('#fTitre').textContent = T('Retrouver une demande'); return; }
   $('#fTitre').textContent = T('Ajouter une autre demande');
-  $('#liste').innerHTML = DEM.map(d => {
+  $('#liste').innerHTML = outils() + DEM.map(d => {
     const tel = (l.find(x => x.reference === d.reference) || {}).telephone || '';
     const e = ETAPES[d.statut] ?? 1;
     return `<div class="dcard" data-ref="${esc(d.reference)}"><div class="dtop"><div><b>${esc(d.trajet || '')}</b><div class="muted">${esc(T('Réf. {r}', { r: d.reference }))}</div></div><span class="pill st-${esc(d.statut)}">${esc(T(LIB[d.statut] || d.statut))}</span></div>
@@ -115,7 +152,8 @@ function afficher(){
       ${d.billet_ref ? `<div class="r2"><span class="muted">${T('Référence billet')}</span><b>${esc(d.billet_ref)}</b></div>` : ''}
       ${d.billet_fichier ? `<button class="btn btn-or w100" type="button" style="margin-top:10px" data-billet="${esc(d.reference)}">📄 ${T('Télécharger mon billet')}</button>` : ''}
       <div data-pay-box>${Paiement.html({ ...d, telephone: tel }, INFOS)}</div>
-      <button class="oubli" type="button" data-oubli="${esc(d.reference)}">${T('Ne plus afficher cette demande sur cet appareil')}</button></div>`;
+      ${CORB ? `<button class="vfc-lien" type="button" data-suppr="${esc(d.reference)}">${Corbeille.ICO.poubelle} ${T('Supprimer de mes demandes')}</button>`
+        : `<button class="oubli" type="button" data-oubli="${esc(d.reference)}">${T('Ne plus afficher cette demande sur cet appareil')}</button>`}</div>`;
   }).join('');
   DEM.forEach(d => {
     const tel = (l.find(x => x.reference === d.reference) || {}).telephone || '';
@@ -130,6 +168,7 @@ function afficher(){
     finally { b.disabled = false; }
   });
   $('#liste').querySelectorAll('[data-oubli]').forEach(b => b.onclick = () => { memo.oublier(b.dataset.oubli); DEM = DEM.filter(d => d.reference !== b.dataset.oubli); afficher(); });
+  brancherOutils();
 }
 
 async function charger(){
@@ -150,7 +189,8 @@ $('#fSuivi').addEventListener('submit', async e => {
   try {
     const j = await api('suivi', { demandes: [{ reference: ref, telephone: tel }] });
     if (!(j.demandes || []).length) { $('#eSuivi').textContent = T("Aucune demande avec cette référence et ce numéro. Vérifiez-les, ou écrivez-nous sur WhatsApp."); $('#eSuivi').hidden = false; return; }
-    memo.ajouter(ref, tel); $('#fSuivi').reset(); await charger();
+    memo.ajouter(ref, tel); if (CORB) CORB.supprimer(ref);   // retrouvée : elle quitte la corbeille
+    $('#fSuivi').reset(); await charger();
     $('#liste').scrollIntoView({ behavior: 'smooth' });
   } catch(err){ $('#eSuivi').textContent = err.message; $('#eSuivi').hidden = false; }
   finally { $('#bVoir').disabled = false; }

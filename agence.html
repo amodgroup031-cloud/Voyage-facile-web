@@ -81,6 +81,7 @@ dialog::backdrop{background:rgba(8,26,51,.55)}
       <button data-f="billet_envoye" aria-pressed="false">Billet envoyé</button>
       <button data-f="annulee" aria-pressed="false">Annulées</button>
       <button data-f="toutes" aria-pressed="false">Toutes</button>
+      <button data-f="corbeille" aria-pressed="false" style="display:none">🗑 Corbeille</button>
     </div>
     <div class="list" id="list"></div>
     <p class="muted" style="margin-top:10px">Mise à jour automatique toutes les 30 secondes. <a href="#" id="refresh">Actualiser</a></p>
@@ -124,6 +125,7 @@ dialog::backdrop{background:rgba(8,26,51,.55)}
 <script src="pays.js"></script>
 <script src="messages-client.js"></script>
 <script src="billet-agence.js"></script>
+<script src="corbeille.js"></script>
 <script>
 const C = window.VF_CONFIG;
 const sb = window.supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY);
@@ -135,7 +137,8 @@ const gnf = n => (n==null ? '—' : Math.round(n).toLocaleString('fr-FR').replac
 const LIB = { nouvelle:'Nouvelle', en_cours:'En cours', confirmee:'Prix confirmé', billet_envoye:'Billet envoyé', annulee:'Annulée' };
 const pill = s => `<span class="pill st-${s}">${LIB[s]||s}</span>`;
 function toast(t){ const el=$('#toast'); el.textContent=t; el.style.display='block'; clearTimeout(toast.t); toast.t=setTimeout(()=>el.style.display='none',2600); }
-let DEM = [], filtre = 'actives', timer = null;
+let DEM = [], filtre = 'actives', timer = null, purge = false, CA = null;
+const CA0 = window.Corbeille ? Corbeille.agence : null, FR = window.Corbeille ? Corbeille.fr : s => s;
 
 function vue(id){ ['vLogin','vWait','vDem','vReg'].forEach(v => $('#'+v).hidden = v!==id); $('#tabs').hidden = !(id==='vDem'||id==='vReg');
   $('#tDem').setAttribute('aria-selected', id==='vDem'); $('#tReg').setAttribute('aria-selected', id==='vReg'); }
@@ -183,25 +186,48 @@ async function charger(){
   const avant = new Set(DEM.filter(d=>d.statut==='nouvelle').map(d=>d.id));
   const payAvant = new Set(DEM.filter(d=>d.paiement_statut==='declare').map(d=>d.id)), premier = DEM.length === 0;
   DEM = data || [];
-  if(DEM.some(d => d.statut==='nouvelle' && !avant.has(d.id)) && avant.size) toast('🔔 Nouvelle demande');
+  CA = CA0 && DEM.length && 'supprime_le' in DEM[0] ? CA0 : null;   // corbeille prête sur le serveur
+  // Demandes restées plus de 30 jours dans la corbeille : effacées une fois par ouverture
+  if (CA && !purge) { purge = true; const ids = await CA.purger(sb, DEM); if (ids.length) DEM = DEM.filter(d => !ids.includes(d.id)); }
+  if(DEM.some(d => d.statut==='nouvelle' && !d.supprime_le && !avant.has(d.id)) && avant.size) toast('🔔 Nouvelle demande');
   else if(!premier && DEM.some(d => d.paiement_statut==='declare' && !payAvant.has(d.id))) toast('💰 Un client a déclaré un paiement');
   afficher();
 }
 const payPill = d => ({ declare:'<span class="pill" style="background:#fff4e5;color:#7a4b00">💰 À vérifier</span>', en_cours:'<span class="pill" style="background:#eef4fb;color:#24456f">Paiement en cours</span>', recu:'<span class="pill" style="background:#e3f5ea;color:#165c3d">Payé</span>' }[d.paiement_statut] || '');
 function afficher(){
   const mois = new Date().toISOString().slice(0,7);
-  $('#kNew').textContent = DEM.filter(d=>d.statut==='nouvelle').length;
-  $('#kCours').textContent = DEM.filter(d=>d.statut==='en_cours'||d.statut==='confirmee').length;
-  const env = DEM.filter(d=>d.statut==='billet_envoye' && (d.maj||'').slice(0,7)===mois);
+  const ACT = DEM.filter(d => !d.supprime_le), CORBA = DEM.filter(d => d.supprime_le).sort((a, b) => (b.supprime_le > a.supprime_le) - (b.supprime_le < a.supprime_le));
+  const bc = $('#filters [data-f="corbeille"]'); if (bc) { bc.style.display = CA ? '' : 'none'; bc.textContent = '🗑 Corbeille' + (CORBA.length ? ` (${CORBA.length})` : ''); }
+  $('#kNew').textContent = ACT.filter(d=>d.statut==='nouvelle').length;
+  $('#kCours').textContent = ACT.filter(d=>d.statut==='en_cours'||d.statut==='confirmee').length;
+  const env = ACT.filter(d=>d.statut==='billet_envoye' && (d.maj||'').slice(0,7)===mois);
   $('#kEnv').textContent = env.length;
   $('#kCom').textContent = gnf(env.reduce((s,d)=> s + (d.prix_final_gnf!=null ? Math.max(0, d.prix_final_gnf - (d.prix_indicatif_gnf - d.commission_gnf)) : d.commission_gnf), 0));
-  const l = DEM.filter(d => filtre==='toutes' || (filtre==='paiement' ? d.paiement_statut==='declare' : filtre==='actives' ? ['nouvelle','en_cours','confirmee'].includes(d.statut) || d.paiement_statut==='declare' : d.statut===filtre));
+  if (filtre === 'corbeille' && CA) { afficherCorbeille(CORBA); return; }
+  const l = ACT.filter(d => filtre==='toutes' || (filtre==='paiement' ? d.paiement_statut==='declare' : filtre==='actives' ? ['nouvelle','en_cours','confirmee'].includes(d.statut) || d.paiement_statut==='declare' : d.statut===filtre));
   $('#list').innerHTML = l.length ? l.map(d => `<button class="item" type="button" data-id="${esc(d.id)}">
      <div><b>${esc(d.id)}</b> · ${esc(d.trajet)}<div class="muted">${esc(d.passagers.map(p=>p.prenom+' '+p.nom).join(', '))} · ${esc(d.telephone)}</div>
      <div class="muted">${esc(new Date(d.cree).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}))}${d.notif_ok?'':' · ⚠️ alerte WhatsApp non envoyée'}</div></div>
      <div style="text-align:right">${payPill(d)} ${pill(d.statut)}<div style="margin-top:6px"><b>${gnf(d.prix_final_gnf ?? d.prix_indicatif_gnf)}</b></div></div></button>`).join('')
     : '<div class="panel muted">Aucune demande ici pour l\'instant.</div>';
+  // Historique (billets envoyés, annulées) : tout mettre à la corbeille d'un coup
+  if (CA && l.length > 1 && ['billet_envoye','annulee'].includes(filtre)) $('#list').insertAdjacentHTML('beforeend', `<button class="vfc-lien" type="button" id="agBulk">${Corbeille.ICO.poubelle} Mettre ces ${l.length} demandes à la corbeille</button>`);
   $('#list').querySelectorAll('.item').forEach(b => b.onclick = () => ouvrir(b.dataset.id));
+  if ($('#agBulk')) $('#agBulk').onclick = async () => {
+    if (!await Corbeille.confirmer({ t: FR, danger: true, titre: `Mettre ${l.length} demandes à la corbeille ?`, oui: 'Mettre à la corbeille',
+      texte: `Elles restent ${CA.JOURS} jours dans la corbeille : vous pouvez les restaurer.` })) return;
+    try { await CA.mettrePlusieurs(sb, l); } catch(e){ toast(e.message); return; }
+    afficher(); Corbeille.annulable(`${l.length} demandes mises à la corbeille`, async () => { await CA.restaurerPlusieurs(sb, l); afficher(); }, { t: FR });
+  };
+}
+function afficherCorbeille(CORBA){
+  Corbeille.liste($('#list'), { items: CORBA, t: FR, toast,
+    titre: d => `${d.id} · ${d.trajet}`,
+    details: d => `${d.passagers.map(p => p.prenom + ' ' + p.nom).join(', ')} · ${d.telephone} · ${LIB[d.statut] || d.statut} · ${gnf(d.prix_final_gnf ?? d.prix_indicatif_gnf)}`,
+    restaurer: d => CA.restaurer(sb, d),
+    supprimer: async d => { await CA.supprimer(sb, d); DEM = DEM.filter(x => x.id !== d.id); },
+    vider: async () => { await CA.supprimer(sb, CORBA); const ids = new Set(CORBA.map(d => d.id)); DEM = DEM.filter(x => !ids.has(x.id)); },
+    apres: afficher });
 }
 document.querySelectorAll('#filters button').forEach(b => b.onclick = () => { filtre = b.dataset.f; document.querySelectorAll('#filters button').forEach(x => x.setAttribute('aria-pressed', x===b)); afficher(); });
 $('#refresh').onclick = e => { e.preventDefault(); charger(); };
@@ -234,6 +260,7 @@ function ouvrir(id){
      <button class="btn btn-wa" type="button" id="waPrix">WhatsApp : prix confirmé</button>
      <a class="btn btn-wa" target="_blank" rel="noopener" id="waBillet">WhatsApp : billet prêt</a>
      <a class="btn btn-ghost" href="tel:${esc(d.telephone)}">Appeler</a>
+     ${CA ? '<button class="btn btn-ghost" type="button" id="xCorb" style="color:#b42318;border-color:#f3c9c4">🗑 Mettre à la corbeille</button>' : ''}
    </div>
    <p class="muted">Le plus simple : joignez le billet dans l'encadré « Billet électronique » ci-dessus, le client le reçoit dans son application.</p>`;
   const MC = window.MessagesClient;
@@ -263,6 +290,14 @@ function ouvrir(id){
     if (w) w.location.href = url; else window.location.href = url;
   };
   brancherPaiement(d);
+  if ($('#xCorb')) $('#xCorb').onclick = async () => {
+    const aTraiter = ['nouvelle','en_cours','confirmee'].includes(d.statut) || ['declare','en_cours'].includes(d.paiement_statut);
+    if (aTraiter && !await Corbeille.confirmer({ t: FR, danger: true, titre: 'Demande encore à traiter', oui: 'Mettre à la corbeille',
+      texte: `${d.id} n'est pas terminée. La mettre quand même à la corbeille ? Vous pourrez la restaurer pendant ${CA.JOURS} jours.` })) return;
+    try { await CA.mettre(sb, d); } catch(e){ toast(e.message); return; }
+    $('#dlg').close(); afficher();
+    Corbeille.annulable('Demande mise à la corbeille', async () => { await CA.restaurer(sb, d); afficher(); }, { t: FR });
+  };
   $('#cpPax').onclick = async () => { try { await navigator.clipboard.writeText(paxTxt); toast('Passagers copiés'); } catch(e){ toast('Copie impossible'); } };
   $('#xSave').onclick = async () => {
     const maj = { statut: $('#xSt').value, prix_final_gnf: $('#xPf').value ? Math.round(+$('#xPf').value) : null, billet_ref: $('#xRef').value.trim() || null, notes: $('#xNo').value.trim() || null, maj: new Date().toISOString() };
