@@ -33,7 +33,7 @@
   // v : voyage tel que renvoyé par « suivi » ; infos : paiement_infos (coordonnées Orange Money de l'agence)
   function html(v, infos){
     const p = v && v.paiement; if (!p) return '';
-    if (p.statut === 'recu') return `<div class="pay"><div class="pay-etat ok">✅ <b>${T('Paiement reçu')}</b>${p.mode === 'agence' ? T(' en agence') : ''}${p.ref ? T(' · réf. {r}', { r: esc(p.ref) }) : ''}.<br>${v.statut === 'billet_envoye' ? T('Merci, bon voyage !') : T('Votre billet est en préparation.')}</div></div>`;
+    if (p.statut === 'recu') return `<div class="pay"><div class="pay-etat ok">✅ <b>${T('Paiement reçu')}</b>${p.mode === 'agence' ? T(' en agence') : ''}${p.ref ? T(' · réf. {r}', { r: esc(p.ref) }) : ''}.<br>${v.type === 'visa' || v.type === 'blocage' ? T(v.statut === 'billet_envoye' ? 'Merci ! Votre réservation est prête.' : 'Votre réservation est en préparation.') : v.statut === 'billet_envoye' ? T('Merci, bon voyage !') : T('Votre billet est en préparation.')}</div></div>`;
     if (p.statut === 'declare') return `<div class="pay"><div class="pay-etat att">⏳ <b>${T('Paiement déclaré')}</b> ${T('(réf. {r}).', { r: esc(p.ref) })}<br>${T("L'agence vérifie la réception sur son compte Orange Money. Vous serez prévenu sur WhatsApp.")}</div></div>`;
     if (!v.a_payer) return '';
     const montant = p.montant_gnf || v.prix_gnf;

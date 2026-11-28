@@ -96,7 +96,7 @@
     const notes = [];
     if (o.bagages && o.bagages.soute === 0) notes.push(T("Bagage en soute non compris dans ce prix : la compagnie le fait payer en plus. Demandez le tarif à votre conseiller."));
     if (!o.bagages) notes.push(T('Bagages : votre conseiller vous confirme la franchise de la compagnie.'));
-    if (escales) notes.push(T("Escale : vérifiez si un visa de transit est demandé pour le pays de l'escale."));
+    if (escales && !window.Transit) notes.push(T("Escale : vérifiez si un visa de transit est demandé pour le pays de l'escale."));
     return `<div class="dv-tete"><h2>${esc(T('Détails du vol'))}</h2><button type="button" class="dv-x" data-dv="fermer" aria-label="${esc(T('Fermer'))}">✕</button></div>
       <article class="dv-billet">
         <header class="dv-bandeau">
@@ -116,6 +116,7 @@
         </div>
         <div class="dv-prix"><span>${esc(T('Prix total'))}</span><b>${prix}</b><small class="dv-sous">${esc(n > 1 ? T('pour {n} passagers', { n }) : T('pour 1 passager'))}</small></div>
       </article>
+      ${window.Transit ? Transit.bloc(o, { choixPasseport: true }) : ''}
       ${notes.map(t => `<p class="dv-note">${esc(t)}</p>`).join('')}
       <p class="dv-petit">${esc(T('Prix indicatif : votre conseiller confirme le prix et les places avec la compagnie avant tout paiement.'))}</p>
       <div class="dv-acts"><button type="button" class="dv-b dv-ghost" data-dv="fermer">${esc(T('Retour aux vols'))}</button><button type="button" class="dv-b dv-or" data-dv="choisir">${esc(T('Choisir ce vol'))}</button></div>`;
@@ -129,6 +130,8 @@
     fond.innerHTML = `<div class="dv-feuille" role="dialog" aria-modal="true" aria-label="${esc(T('Détails du vol'))}"><div class="dv-grab"></div>${html(o, opts)}</div>`;
     document.body.appendChild(fond);
     document.body.classList.add('dv-ouvert');
+    // Changement du pays du passeport : l'alerte « visa de transit » se met à jour
+    if (window.Transit) Transit.brancher(fond, () => { const y = fond.querySelector('.dv-feuille').scrollTop; ouvrir(o, opts); const f = document.querySelector('#dvFond .dv-feuille'); if (f) f.scrollTop = y; });
     fond.addEventListener('click', e => {
       if (e.target === fond) return fermer();
       const b = e.target.closest('[data-dv]'); if (!b) return;

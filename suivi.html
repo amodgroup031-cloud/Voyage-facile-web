@@ -61,6 +61,7 @@
 <script src="devise.js"></script>
 <script src="paiement.js"></script>
 <script src="corbeille.js"></script>
+<script src="options-voyage.js"></script>
 <script>
 const C = window.VF_CONFIG;
 const API = C.SUPABASE_URL + "/functions/v1/vf-api";
@@ -145,12 +146,15 @@ function afficher(){
   $('#liste').innerHTML = outils() + DEM.map(d => {
     const tel = (l.find(x => x.reference === d.reference) || {}).telephone || '';
     const e = ETAPES[d.statut] ?? 1;
-    return `<div class="dcard" data-ref="${esc(d.reference)}"><div class="dtop"><div><b>${esc(d.trajet || '')}</b><div class="muted">${esc(T('Réf. {r}', { r: d.reference }))}</div></div><span class="pill st-${esc(d.statut)}">${esc(T(LIB[d.statut] || d.statut))}</span></div>
+    const OV = window.OptionsVoyage, opt = OV && OV.est(d.type);
+    return `<div class="dcard" data-ref="${esc(d.reference)}"><div class="dtop"><div><b>${esc(d.trajet || '')}</b><div class="muted">${esc(T('Réf. {r}', { r: d.reference }))}</div></div><span class="pill st-${esc(d.statut)}">${esc(opt ? T(OV.libelle(d) || d.statut) : T(LIB[d.statut] || d.statut))}</span></div>
       ${d.statut === 'annulee' ? '' : `<div class="steps4">${[1,2,3,4].map(k => `<i class="${k <= e ? 'on' : ''}"></i>`).join('')}</div>`}
-      <p class="muted" style="margin:6px 0">${esc(T(EXPL[d.statut] || ''))}</p>
-      <div class="r2"><span class="muted">${T(d.prix_confirme ? 'Prix confirmé' : 'Prix indicatif')}</span><b>${prix(d.prix_gnf)}</b></div>
-      ${d.billet_ref ? `<div class="r2"><span class="muted">${T('Référence billet')}</span><b>${esc(d.billet_ref)}</b></div>` : ''}
-      ${d.billet_fichier ? `<button class="btn btn-or w100" type="button" style="margin-top:10px" data-billet="${esc(d.reference)}">📄 ${T('Télécharger mon billet')}</button>` : ''}
+      <p class="muted" style="margin:6px 0">${esc(opt ? T(OV.explication(d) || '') : T(EXPL[d.statut] || ''))}</p>
+      ${OV ? OV.bloc(d, n => prix(n)) : ''}
+      <div class="r2"><span class="muted">${T(opt ? 'Frais de réservation' : d.prix_confirme ? (d.frais_payes_gnf ? 'Reste à payer' : 'Prix confirmé') : 'Prix indicatif')}</span><b>${prix(d.prix_gnf)}</b></div>
+      ${d.billet_ref ? `<div class="r2"><span class="muted">${T(opt ? 'Code de réservation' : 'Référence billet')}</span><b>${esc(d.billet_ref)}</b></div>` : ''}
+      ${d.billet_fichier ? `<button class="btn btn-or w100" type="button" style="margin-top:10px" data-billet="${esc(d.reference)}">📄 ${T(opt ? 'Télécharger ma réservation' : 'Télécharger mon billet')}</button>` : ''}
+      ${OV && OV.peutAcheter(d) ? `<a class="btn btn-navy w100" style="margin-top:10px" target="_blank" rel="noopener" href="${esc('https://wa.me/' + String(C.AGENCE_WHATSAPP).replace(/\D/g, '') + '?text=' + encodeURIComponent(OV.messageAcheter(d)))}">${esc(OV.libAcheter(d))}</a>` : ''}
       <div data-pay-box>${Paiement.html({ ...d, telephone: tel }, INFOS)}</div>
       ${CORB ? `<button class="vfc-lien" type="button" data-suppr="${esc(d.reference)}">${Corbeille.ICO.poubelle} ${T('Supprimer de mes demandes')}</button>`
         : `<button class="oubli" type="button" data-oubli="${esc(d.reference)}">${T('Ne plus afficher cette demande sur cet appareil')}</button>`}</div>`;

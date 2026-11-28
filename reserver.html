@@ -102,6 +102,8 @@
     <p class="sub">Écrivez les noms exactement comme sur le passeport.</p>
     <form class="panel" id="fPax" novalidate>
       <div class="recap" id="recap"></div>
+      <div id="choixType"></div>
+      <div id="transitBox"></div>
       <div id="paxList"></div>
       <div class="grid">
         <div><label for="tel">Votre numéro WhatsApp</label><input id="tel" type="tel" inputmode="tel" placeholder="+224 6__ __ __ __" required></div>
@@ -120,8 +122,8 @@
   <!-- 4. CONFIRMÉ -->
   <section id="vDone" hidden>
     <div class="panel">
-      <div class="ok"><b>✅ Demande envoyée !</b><br>Référence : <b id="ref"></b></div>
-      <p style="margin:14px 0 6px">Un conseiller VOYAGE FACILE vérifie le prix et les places avec la compagnie, puis vous écrit sur WhatsApp au <b id="telDone"></b>.</p>
+      <div class="ok"><b id="doneTitre">✅ Demande envoyée !</b><br>Référence : <b id="ref"></b></div>
+      <p style="margin:14px 0 6px">Un conseiller VOYAGE FACILE vérifie le prix et les places avec la compagnie, puis vous écrit sur WhatsApp au <b id="telDone"></b>. <span id="doneSuite"></span></p>
       <p class="muted">Ne payez rien avant la confirmation du prix par votre conseiller. Ensuite, vous pourrez payer par Orange Money depuis la page « Suivre et payer ma demande ». Nous ne vous demanderons jamais votre code secret Orange Money.</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
         <a class="btn btn-or" id="suiviDone" href="suivi.html">Suivre et payer ma demande</a>
@@ -137,6 +139,8 @@
 <script src="devise.js"></script>
 <script src="compagnies.js"></script>
 <script src="pays.js"></script>
+<script src="transit.js"></script>
+<script src="options-voyage.js"></script>
 <script src="detail-vol.js"></script>
 <script>
 const C = window.VF_CONFIG;
@@ -309,7 +313,7 @@ function renderOffres(){
   const chip = (cle, val, txt) => `<button type="button" data-${cle}="${val}" aria-pressed="${cle==='tri' ? FILTRE.tri===val : !!FILTRE[val]}">${txt}</button>`;
   const barre = `<div class="fbar" id="triBar">${chip('tri','prix','💰 Moins cher')}${chip('tri','duree','⚡ Plus rapide')}${chip('tri','heure','🕗 Départ tôt')}${chip('f','direct','Direct uniquement')}${chip('f','soute','Bagage en soute')}
     </div>`;
-  const badge = o => [o.total_gnf === moinsCher ? '<span class="pill" style="background:#e3f5ea;color:#165c3d">Le moins cher</span>' : '', dureeTot(o) === plusRapide ? '<span class="pill" style="background:#eef4fb;color:#24456f">Le plus rapide</span>' : '', estDirect(o) ? '<span class="pill" style="background:#efe9fb;color:#4b2f86">Direct</span>' : ''].join(' ');
+  const badge = o => [o.total_gnf === moinsCher ? '<span class="pill" style="background:#e3f5ea;color:#165c3d">Le moins cher</span>' : '', dureeTot(o) === plusRapide ? '<span class="pill" style="background:#eef4fb;color:#24456f">Le plus rapide</span>' : '', estDirect(o) ? '<span class="pill" style="background:#efe9fb;color:#4b2f86">Direct</span>' : '', window.Transit ? Transit.badge(o) : ''].join(' ');
   const rangee = window.Compagnies ? Compagnies.rangee(toutes, FILTRE.compagnie, n => prix(n)) : '';
   $('#results').innerHTML = barreDevise() + `<p class="muted">${l.length} vol${l.length > 1 ? 's' : ''} sur ${toutes.length} · ${prixPour(p.adultes + p.enfants)}. Prix indicatif, confirmé par votre conseiller avant paiement.</p>` + barre + rangee +
     (l.length ? l.map(o => `<article class="offer"><div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px">${badge(o)}</div>${legHTML(o.aller,'Aller')}${legHTML(o.retour,'Retour')}${bagages(o)}</div>
@@ -342,7 +346,16 @@ function choisir(i){
   }
   $('#paxList').innerHTML = h;
   $('#recap').innerHTML = `${legHTML(CHOIX.aller,'Aller')}${legHTML(CHOIX.retour,'Retour')}<div style="margin-top:6px"><b>Total indicatif : ${prix(CHOIX.total_gnf)}</b> <span class="muted">(${n > 1 ? n + ' passagers' : '1 passager'})</span></div>`;
+  $('#choixType').innerHTML = window.OptionsVoyage ? OptionsVoyage.choix({ options: RECH.options, total: CHOIX.total_gnf, prix: x => prix(x) }) : '';
+  afficherTransit();
   $('#ePax').hidden = true; show('vPax'); etape(3);
+}
+// Alerte « visa de transit » pour le vol choisi (le pays du passeport se change ici)
+function afficherTransit(){
+  const el = $('#transitBox'); if (!el) return;
+  if (!window.Transit || !CHOIX) { el.innerHTML = ''; return; }
+  el.innerHTML = Transit.bloc(CHOIX, { case: true, choixPasseport: true });
+  Transit.brancher(el, afficherTransit);
 }
 $('#bBack').onclick = () => { show('vSearch'); etape(2); };
 
@@ -358,11 +371,19 @@ $('#fPax').addEventListener('submit', async e => {
     passagers.push({ civilite: civ.value, prenom, nom, naissance });
   }
   if(!$('#tel').value.trim()) return fail('Indiquez votre numéro WhatsApp.');
+  const vt = $('#transitBox [data-vt="ok"]');
+  if (vt && !vt.checked) return fail('Visa de transit : cochez la case si vous avez ce visa, sinon choisissez un autre vol.');
   if(!$('#ok').checked) return fail('Cochez la case pour confirmer votre demande.');
+  const type = window.OptionsVoyage ? OptionsVoyage.choisi($('#fPax')) : 'billet';
   $('#bSend').disabled = true; $('#bSend').textContent = 'Envoi…';
   try {
-    const j = await api('demande', { recherche_id: RECH.recherche_id, offre: CHOIX.i, passagers, telephone: $('#tel').value, email: $('#mail').value || null, message: $('#msg').value || null, accord: true });
+    const j = await api('demande', { recherche_id: RECH.recherche_id, offre: CHOIX.i, passagers, telephone: $('#tel').value, email: $('#mail').value || null, message: $('#msg').value || null, accord: true,
+      type, passeport: window.Transit ? Transit.passeport() : null });
     $('#ref').textContent = j.reference; $('#telDone').textContent = $('#tel').value;
+    const tDone = j.type || type;
+    $('#doneTitre').textContent = tDone === 'visa' ? '✅ Demande de réservation pour visa envoyée !' : tDone === 'blocage' ? '✅ Demande pour bloquer le prix envoyée !' : '✅ Demande envoyée !';
+    $('#doneSuite').textContent = tDone === 'visa' ? "Après le paiement des frais, votre conseiller pose l'option et vous envoie la réservation pour votre dossier de visa. Les frais sont déduits du billet si vous l'achetez ensuite."
+      : tDone === 'blocage' ? 'Après le paiement des frais, votre conseiller bloque le prix et vous donne la date limite pour acheter le billet. Les frais sont déduits du billet.' : '';
     $('#waDone').href = waLink(`Bonjour VOYAGE FACILE, je viens d'envoyer la demande ${j.reference} (${PARAMS.origine} → ${PARAMS.destination}, ${gnf(j.total_gnf)}).`);
     try { const l = JSON.parse(localStorage.getItem('vf_web_demandes') || '[]').filter(x => x.reference !== j.reference); l.unshift({ reference: j.reference, telephone: $('#tel').value.trim() }); localStorage.setItem('vf_web_demandes', JSON.stringify(l.slice(0, 20))); } catch(e){}
     $('#suiviDone').href = 'suivi.html?ref=' + encodeURIComponent(j.reference);

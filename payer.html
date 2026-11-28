@@ -151,13 +151,16 @@ function afficher(){
   let h = BANDEAU;
   if (d.statut === 'annulee') h += etat('non', '✕', T('Cette demande est annulée.'), T('Pour toute question, écrivez-nous sur WhatsApp.'));
   else if (p === 'recu') {
-    h += etat('ok', '✅', T('Paiement reçu, merci !'), d.billet_fichier ? T('Votre billet est prêt.') : T('Votre billet arrive très bientôt sur WhatsApp.'));
-    if (d.billet_fichier) h += `<button class="gros or" type="button" data-a="billet">${T('Télécharger mon billet')}</button>`;
+    const opt = d.type === 'visa' || d.type === 'blocage';
+    h += etat('ok', '✅', T('Paiement reçu, merci !'), opt ? T(d.billet_fichier ? 'Votre réservation est prête.' : 'Votre réservation arrive très bientôt sur WhatsApp.')
+      : d.billet_fichier ? T('Votre billet est prêt.') : T('Votre billet arrive très bientôt sur WhatsApp.'));
+    if (d.billet_fichier) h += `<button class="gros or" type="button" data-a="billet">${T(opt ? 'Télécharger ma réservation' : 'Télécharger mon billet')}</button>`;
   }
   else if (p === 'declare') h += etat('att', '⏳', T('Paiement envoyé'), T("L'agence vérifie la réception et vous prévient sur WhatsApp."));
   else if (!d.a_payer) h += etat('att', '⏳', T('Prix en cours de vérification'), T('Votre conseiller vérifie le prix et les places avec la compagnie. Vous recevrez le lien de paiement sur WhatsApp.'));
   else {
-    h += `<div class="montant"><span>${T('Montant à payer')}</span><b data-no-t>${gnf(m)}</b>${d.nb_passagers > 1 ? `<small>${T('pour {n} passagers', { n: d.nb_passagers })}</small>` : ''}</div>`;
+    const libM = d.type === 'visa' ? 'Frais de réservation pour visa' : d.type === 'blocage' ? 'Frais pour bloquer le prix' : 'Montant à payer';
+    h += `<div class="montant"><span>${T(libM)}</span><b data-no-t>${gnf(m)}</b>${d.type === 'visa' || d.type === 'blocage' ? `<small>${T('Déduits du billet si vous l\'achetez ensuite')}</small>` : d.frais_payes_gnf ? `<small>${T('Frais de réservation déjà déduits : {f}', { f: gnf(d.frais_payes_gnf) })}</small>` : d.nb_passagers > 1 ? `<small>${T('pour {n} passagers', { n: d.nb_passagers })}</small>` : ''}</div>`;
     if (p === 'refuse') h += etat('non', '!', T('Référence non retrouvée'), T("Vérifiez le SMS d'Orange Money et renvoyez la bonne référence."));
     if (p === 'en_cours') h += etat('att', '⏳', T('Paiement Orange Money en cours'), T('Si vous avez validé le paiement, touchez « Actualiser ».')) + `<button class="gros ghost" type="button" data-a="actualiser">${T('Actualiser')}</button>`;
     const enLigne = INFOS.en_ligne && (!INFOS.plafond_en_ligne || m <= INFOS.plafond_en_ligne);

@@ -1,14 +1,14 @@
 {
-  "web": "2026.11.28.2",
+  "web": "2026.11.28.3",
   "notes": [
-    "Corbeille : supprimez et restaurez vos voyages"
+    "Alerte visa de transit, bloquer le prix, réservation pour visa"
   ],
-  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.28.2.zip",
-  "checksum": "586fbfc2dfc76eb92466fb951c4dbd434927863c940279e0dd91bf7906e8c3e1",
+  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.28.3.zip",
+  "checksum": "c6cffc05e0d0d71d5887fba68dcec897a8c2b57c7143f3587ec8edccda9eb410",
   "native_min": 18,
   "apk": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/Voyage-Facile.apk",
   "apk_version": "1.0.18",
   "notes_en": [
-    "Trash: delete and restore your trips"
+    "Transit visa alert, price lock, visa reservation"
   ]
 }
