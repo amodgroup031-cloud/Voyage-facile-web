@@ -1,10 +1,10 @@
 {
-  "web": "2026.11.28.4",
+  "web": "2026.11.28.5",
   "notes": [
     "Hôtels du monde entier, application adaptée à tous les pays, Mes discussions"
   ],
-  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.28.4.zip",
-  "checksum": "50ce920870545fbf1b3b3e9aa9c1c8a1e3f638b866e2650e53a5db18a7ae04c7",
+  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.28.5.zip",
+  "checksum": "d74a856cecfb2bf72c6377131c4d6c5263078fcad2f35bd168fc0c45ae09aa2b",
   "native_min": 18,
   "apk": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/Voyage-Facile.apk",
   "apk_version": "1.0.18",

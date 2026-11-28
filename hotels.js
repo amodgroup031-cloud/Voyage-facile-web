@@ -226,31 +226,56 @@
     $('#hEn').onchange = ages;
 
     /* Destination : liste des lieux (villes, quartiers, hôtels) du fournisseur */
+    // Chaque recherche de lieu est payante chez le fournisseur (environ 1 centime de dollar) :
+    // on attend 3 lettres et une pause de frappe, et les réponses sont gardées 30 jours sur l'appareil.
     const inp = $('#hLieu'), liste = $('#hLieux');
     let minut = null, tour = 0, items = [];
+    const CLE_LIEUX = 'vf_lieux_hotels', JOURS_LIEUX = 30;
+    const cleQ = q => (window.Pays && Pays.sansAccent ? Pays.sansAccent(q) : q.toLowerCase()).trim() + '|' + ((window.L && L.code) || 'fr');
+    const lireCache = () => { try { return JSON.parse(localStorage.getItem(CLE_LIEUX) || '{}') || {}; } catch (e) { return {}; } };
+    async function chercherLieux(q){
+      const k = cleQ(q), c = lireCache(), x = c[k];
+      if (x && Date.now() - x.t < JOURS_LIEUX * 864e5) return x.l;
+      // Une recherche plus courte déjà faite contient souvent la réponse (« Dak » → « Dakar »)
+      for (const [kk, v] of Object.entries(c)) {
+        const [qq, lg] = kk.split('|');
+        if (lg === k.split('|')[1] && k.startsWith(qq) && Date.now() - v.t < JOURS_LIEUX * 864e5) {
+          const t = k.split('|')[0], l = v.l.filter(p => cleQ(p.nom).split('|')[0].includes(t));
+          if (l.length) return l;
+        }
+      }
+      const j = await api('hotel_lieux', { q });
+      const l = j.lieux || [];
+      if (l.length) {
+        c[k] = { t: Date.now(), l };
+        const cles = Object.keys(c); if (cles.length > 200) cles.sort((a, b) => c[a].t - c[b].t).slice(0, cles.length - 200).forEach(z => delete c[z]);
+        try { localStorage.setItem(CLE_LIEUX, JSON.stringify(c)); } catch (e) {}
+      }
+      return l;
+    }
     const fermer = () => { liste.hidden = true; };
     const choisirLieu = l => { inp.value = l.nom; inp.dataset.id = l.id; inp.dataset.nom = l.nom; fermer(); inp.blur(); };
     inp.addEventListener('input', () => {
       inp.dataset.id = ''; clearTimeout(minut);
-      const q = inp.value.trim(); if (q.length < 2 || H.mode === 'manuel') { fermer(); return; }
+      const q = inp.value.trim(); if (q.length < 3 || H.mode === 'manuel') { fermer(); return; }
       const n = ++tour;
       minut = setTimeout(async () => {
         try {
-          const j = await api('hotel_lieux', { q });
+          const l = await chercherLieux(q);
           if (n !== tour) return;
-          items = j.lieux || [];
+          items = l;
           liste.innerHTML = items.map((l, i) => `<li data-i="${i}"><b>${esc(l.nom)}</b><div class="muted">${esc(l.adresse || '')}</div></li>`).join('');
           liste.hidden = !items.length || document.activeElement !== inp;
           liste.querySelectorAll('li').forEach(li => li.addEventListener('pointerdown', e => { e.preventDefault(); choisirLieu(items[+li.dataset.i]); }));
         } catch (e) { fermer(); }
-      }, 300);
+      }, 550);
     });
     inp.addEventListener('blur', () => setTimeout(fermer, 200));
     // Le client a tapé une ville sans toucher la liste : le premier lieu trouvé est pris.
     async function resoudreLieu(){
       if (inp.dataset.id) return true;
       const q = inp.value.trim(); if (q.length < 2) return false;
-      try { const j = await api('hotel_lieux', { q }); const l = (j.lieux || [])[0]; if (l) { choisirLieu(l); return true; } } catch (e) {}
+      try { const l = (await chercherLieux(q))[0]; if (l) { choisirLieu(l); return true; } } catch (e) {}
       return false;
     }
 
