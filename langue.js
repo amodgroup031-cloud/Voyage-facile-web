@@ -139,7 +139,7 @@
     'Quelqu\'un d\'autre peut-il payer pour moi ?':'Can someone else pay for me?',
     "Oui. Dans « Mes voyages », touchez « Faire payer un proche » et envoyez le lien sur WhatsApp. La personne voit le montant et paie, sans voir votre numéro ni votre billet.":
       'Yes. In “My trips”, tap “Ask someone to pay” and send the link on WhatsApp. The person sees the amount and pays, without seeing your number or your ticket.',
-    "Réservé à l'équipe VOYAGE FACILE":'VOYAGE FACILE team only', 'Crédits photos et taux de change':'Photo credits and exchange rates', 'Mentions et crédits':'Notices and credits', 'Taux de change :':'Exchange rates:',
+    "Réservé à l'équipe VOYAGE FACILE":'VOYAGE FACILE team only', 'Crédits photos et taux de change':'Photo credits and exchange rates', 'Mentions et crédits':'Notices and credits', 'Crédits':'Credits', 'Taux de change :':'Exchange rates:',
     'Voyage Facile · version':'Voyage Facile · version', ' · mise à jour {v}':' · update {v}', 'Prix affichés en {d}':'Prices shown in {d}',
     'Photos réelles prises par des photographes et publiées sous licence libre sur Wikimedia Commons.':'Real photos taken by photographers and published under a free licence on Wikimedia Commons.',
     'Icônes : Lucide (licence ISC).':'Icons: Lucide (ISC licence).', 'Bannière':'Banner', 'Assurance':'Insurance',

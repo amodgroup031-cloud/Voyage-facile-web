@@ -1,10 +1,10 @@
 {
-  "web": "2026.11.28.6",
+  "web": "2026.11.28.7",
   "notes": [
     "Bouton « Détails » sur chaque hôtel : photos, description, équipements, horaires"
   ],
-  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.28.6.zip",
-  "checksum": "0caae9f26a902ede74a46a3aa758e666a0c642a00979a160ece66fcd4c0fe7f5",
+  "zip": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/www-2026.11.28.7.zip",
+  "checksum": "a5915c3b49b0829dea0861b5a9ac8617bab076ce91cf694bdea450258008f4c9",
   "native_min": 18,
   "apk": "https://amodgroup031-cloud.github.io/Voyage-facile-web/app/Voyage-Facile.apk",
   "apk_version": "1.0.18",
